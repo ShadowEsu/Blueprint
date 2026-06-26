@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Blueprint Scene</title>
+<style>
+  html,body{margin:0;height:100%;background:#08182e;overflow:hidden}
+  #scene{position:fixed;inset:0}
+  #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#7e9bc4;font:12px ui-monospace,monospace;letter-spacing:1px;background:#08182e}
+</style>
+</head>
+<body>
+  <div id="scene"></div>
+  <div id="load">LOADING MODEL…</div>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+// Scene-only build of the Blueprint viewer. UI lives in Flutter; this page just
+// renders the model and exposes window.BlueprintScene, driven via postMessage.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const CONFIG = { modelSize:5, explodeFactor:0.5, focusZoom:2.2, sideZoom:1.8 };
+const SYN = {
+  lights:['headlight','tail_light','taillight','brakelight','lamp','_led','indicator','signal','drl'],
+  glass:['glass','window','windshield','windscreen','quarterglass'],
+  interior:['seat','dash','steering','steer','shifter','pedal','console','doorpanel','gauge','cluster','cabin','cockpit','needle','tacho'],
+  brakes:['brakedisc','brakes','caliper','rotor','brakeline','brakepad','disc_','disc.'],
+  wheels:['wheel','tyre','tire','_rim','alloy'],
+  suspension:['suspension','coilover','damper','shock','spring','strut','wishbone','lowerarm','upperarm','swaybar','antiroll','pushrod','tierod','trailingarm','subframe','knuckle','hub_','steeringbox'],
+  transmission:['transmission','gearbox','transaxle','clutch','differential','diff_','driveshaft','halfshaft'],
+  cooling:['radiator','coolant','intercooler','heatshield'],
+  fuel:['fueltank','fuelline','fuel_'],
+  exhaust:['exhaust','muffler','tailpipe','catalytic','exhausttip'],
+  engine:['engine','motor','powerplant','cylinder','boxer','flat6','intake','manifold','block_'],
+  rear_wing:['carbon_wing','rear_wing','wing','spoiler','diffuser','splitter','canard','aero'],
+  doors:['door_l','door_r','door.','_door'],
+  body:['body','chassis','fender','door','hood','bonnet','bumper','tailgate','sideskirt','skirt','mirror','roof','fascia','quarter','pillar','sill','panel','underbody','leg'],
+};
+const PRIORITY=['lights','glass','interior','brakes','wheels','suspension','transmission','cooling','fuel','exhaust','engine','rear_wing','doors','body'];
+let PARTS={};
+function classify(nodes){ const m={};PRIORITY.forEach(c=>m[c]=[]); nodes.forEach(n=>{const s=n.name.toLowerCase();for(const c of PRIORITY){if(SYN[c].some(k=>s.includes(k))){m[c].push(n);break;}}}); return m; }
+
+const mount=document.getElementById('scene');
+const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.outputColorSpace=THREE.SRGBColorSpace; mount.appendChild(renderer.domElement);
+const scene=new THREE.Scene(); scene.background=new THREE.Color('#08182e'); scene.fog=new THREE.Fog('#08182e',16,40);
+const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.05,1000); camera.position.set(6,3,8);
+const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=0.1;
+controls.addEventListener('start',()=>camAnimating=false);
+scene.add(new THREE.HemisphereLight('#bcd6ff','#162038',1.05));
+const k=new THREE.DirectionalLight('#eaf3ff',1.9); k.position.set(6,9,6); scene.add(k);
+const f=new THREE.DirectionalLight('#7fb6ff',0.7); f.position.set(-6,4,-5); scene.add(f);
+const grid=new THREE.GridHelper(60,60,0x2f5e9e,0x16304f); grid.position.y=-0.01; scene.add(grid);
+
+let modelGroup=null,partNodes=[],modelCenter=new THREE.Vector3();
+let orient={front:new THREE.Vector3(0,0,1),right:new THREE.Vector3(1,0,0),up:new THREE.Vector3(0,1,0)};
+const explodedMovers=new Set(),highlighted=new Set();
+let camGoalPos=camera.position.clone(),camGoalTgt=new THREE.Vector3(),camAnimating=false;
+const loader=new GLTFLoader();
+
+function loadModel(url){
+  document.getElementById('load').style.display='flex';
+  loader.load(url,gltf=>{
+    if(modelGroup) scene.remove(modelGroup);
+    const model=gltf.scene; modelGroup=model;
+    let box=new THREE.Box3().setFromObject(model);
+    const size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+    const s=CONFIG.modelSize/Math.max(size.x,size.y,size.z); model.scale.setScalar(s); model.position.sub(center.multiplyScalar(s));
+    scene.add(model); box=new THREE.Box3().setFromObject(model); modelCenter=box.getCenter(new THREE.Vector3());
+    const root=model.getObjectByName('RootNode')||biggest(model);
+    partNodes=root.children.filter(c=>!/_0$/.test(c.name)); if(partNodes.length<3){ partNodes=[]; model.traverse(o=>{if(o.isMesh)partNodes.push(o);}); }
+    PARTS=classify(partNodes);
+    model.updateMatrixWorld(true);
+    const r=box.getSize(new THREE.Vector3()).length()/2,D=r*CONFIG.explodeFactor;
+    partNodes.forEach(p=>{ p.userData.home=p.position.clone();
+      const c=new THREE.Box3().setFromObject(p).getCenter(new THREE.Vector3());
+      const dir=c.clone().sub(modelCenter); dir.y*=0.55; if(dir.lengthSq()<1e-6)dir.set(0,1,0); dir.normalize();
+      const par=p.parent,a=par.worldToLocal(c.clone()),b=par.worldToLocal(c.clone().addScaledVector(dir,D));
+      p.userData.boom=p.userData.home.clone().add(b.sub(a)); });
+    orient=computeOrientation(); document.getElementById('load').style.display='none';
+    BlueprintScene.focus_camera({target:'whole_car'});
+  },undefined,err=>{ document.getElementById('load').textContent='Model failed to load'; console.error(err); });
+}
+function biggest(m){let best=m,n=0;m.traverse(o=>{if(o.children.length>n){n=o.children.length;best=o;}});return best;}
+function centerOf(kw){const p=partNodes.find(n=>n.name.toLowerCase().includes(kw));return p?new THREE.Box3().setFromObject(p).getCenter(new THREE.Vector3()):null;}
+function computeOrientation(){
+  const bf=centerOf('bumper_f')||centerOf('frontbumper'),br=centerOf('bumper_r')||centerOf('rearbumper');
+  const dl=centerOf('door_l')||centerOf('mirror_l'),dr=centerOf('door_r')||centerOf('mirror_r');
+  return { front:(bf&&br)?bf.clone().sub(br).setY(0).normalize():new THREE.Vector3(0,0,1),
+           right:(dl&&dr)?dr.clone().sub(dl).setY(0).normalize():new THREE.Vector3(1,0,0), up:new THREE.Vector3(0,1,0) };
+}
+function nodesFor(t){ if(t==='whole_car')return partNodes; return PARTS[t]||[]; }
+function meshesUnder(nodes){const o=[];nodes.forEach(n=>n.traverse(m=>{if(m.isMesh)o.push(m);}));return o;}
+function boxOf(nodes){const b=new THREE.Box3();nodes.forEach(n=>b.union(new THREE.Box3().setFromObject(n)));return b;}
+const NAMED={'nardo grey':'#6E7479','gunmetal':'#3a3f44','racing green':'#13452a','guards red':'#c0121c','blueprint blue':'#1e64b4'};
+function resolveColor(c){const k=(c||'').toLowerCase();if(NAMED[k])return NAMED[k];try{return new THREE.Color(c).getStyle();}catch{return '#5fb0ff';}}
+
+const BlueprintScene={
+  focus_camera({target}){ if(!partNodes.length)return; camAnimating=true;
+    const ds={front:1,rear:1,left:1,right:1,top:1};
+    if(ds[target]||target==='whole_car'){ const b=boxOf(partNodes),c=b.getCenter(new THREE.Vector3()),r=b.getSize(new THREE.Vector3()).length()/2,{front,right,up}=orient; let dir;
+      if(target==='front')dir=front.clone().addScaledVector(up,.35); else if(target==='rear')dir=front.clone().negate().addScaledVector(up,.35);
+      else if(target==='left')dir=right.clone().negate().addScaledVector(up,.3); else if(target==='right')dir=right.clone().addScaledVector(up,.3);
+      else if(target==='top')dir=up.clone().addScaledVector(front,.2); else dir=front.clone().multiplyScalar(.8).addScaledVector(right,.8).addScaledVector(up,.6);
+      camGoalTgt.copy(c); camGoalPos.copy(c).addScaledVector(dir.normalize(),r*CONFIG.sideZoom); return; }
+    const nodes=nodesFor(target); if(!nodes.length){ BlueprintScene.focus_camera({target:'whole_car'}); return; }
+    const b=boxOf(nodes),c=b.getCenter(new THREE.Vector3()),r=Math.max(b.getSize(new THREE.Vector3()).length()/2,.4),{front,right,up}=orient;
+    const dir=front.clone().multiplyScalar(.7).addScaledVector(right,.7).addScaledVector(up,.5).normalize();
+    camGoalTgt.copy(c); camGoalPos.copy(c).addScaledVector(dir,r*CONFIG.focusZoom); },
+  highlight({target}){ const ms=meshesUnder(nodesFor(target)); ms.forEach(m=>{ if(!m.userData.origMat){m.userData.origMat=m.material;m.material=m.material.clone();} highlighted.add(m); }); setTimeout(()=>clearHL(ms),5000); },
+  explode({target}){ nodesFor(target).forEach(n=>explodedMovers.add(n)); },
+  isolate({target}){ const keep=new Set(nodesFor(target)); if(!keep.size)return; partNodes.forEach(n=>n.visible=keep.has(n)); },
+  reset_view(){ explodedMovers.clear(); partNodes.forEach(n=>n.visible=true); clearHL([...highlighted]); BlueprintScene.focus_camera({target:'whole_car'}); },
+  show_labels(){}, show_specs(){},
+  set_paint({color}){ const c=resolveColor(color); const body=meshesUnder(PARTS.body||[]); const ex=/glass|chrome|black|window|light|tyre|tire|rubber|carbon|grille|vent|plastic/;
+    scene.traverse(o=>{ if(!o.isMesh)return; const named=o.name.toLowerCase().includes('paint'); const isBody=body.includes(o)&&!ex.test(o.name.toLowerCase());
+      if(named||isBody){ if(!o.userData.paintMat){o.userData.paintMat=o.material;o.material=o.material.clone();} o.material.color.set(c); } }); },
+};
+function clearHL(ms){ ms.forEach(m=>{ if(m.userData.origMat){m.material.dispose&&m.material.dispose();m.material=m.userData.origMat;m.userData.origMat=null;} highlighted.delete(m); }); }
+window.BlueprintScene=BlueprintScene;
+
+// ── Flutter bridge ───────────────────────────────────────────────────────────
+addEventListener('message',e=>{ try{ const d=typeof e.data==='string'?JSON.parse(e.data):e.data; if(d&&d.type==='action'){ const fn=BlueprintScene[d.tool]; if(fn) fn(d.args||{}); } }catch(_){} });
+
+// tap a part → tell Flutter which category was hit
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
+renderer.domElement.addEventListener('click',ev=>{
+  mouse.x=(ev.clientX/innerWidth)*2-1; mouse.y=-(ev.clientY/innerHeight)*2+1; ray.setFromCamera(mouse,camera);
+  const hits=ray.intersectObjects(partNodes,true); if(!hits.length)return;
+  let o=hits[0].object, cat=null;
+  while(o&&!cat){ for(const c of PRIORITY){ if((PARTS[c]||[]).includes(o)){cat=c;break;} } o=o.parent; }
+  if(cat) parent.postMessage(JSON.stringify({type:'partTap',part:cat}),'*');
+});
+
+const sp=new URLSearchParams(location.search);
+loadModel(sp.get('model')?`./models/${sp.get('model')}`:'./models/gt3rs.glb');
+
+function tick(t){
+  if(camAnimating){ camera.position.lerp(camGoalPos,.10); controls.target.lerp(camGoalTgt,.10); if(camera.position.distanceTo(camGoalPos)<.05)camAnimating=false; }
+  controls.update();
+  partNodes.forEach(p=>{ const g=explodedMovers.has(p)?p.userData.boom:p.userData.home; if(g)p.position.lerp(g,.12); });
+  const glow=.35+.3*Math.sin(t*.006); highlighted.forEach(m=>{ if(m.material.emissive)m.material.emissive.setRGB(glow*.15,glow*.55,glow*1.0); });
+  renderer.render(scene,camera); requestAnimationFrame(tick);
+}
+addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
