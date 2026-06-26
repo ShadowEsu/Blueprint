@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./asset-config.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #06080b; overflow: hidden; }
+  .gtrs-range { -webkit-appearance:none; appearance:none; height:2px; border-radius:2px; background:rgba(255,255,255,.16); outline:none; cursor:pointer; }
+  .gtrs-range::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:#e6e9ee; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.6); transition:box-shadow .18s; }
+  .gtrs-range:hover::-webkit-slider-thumb, .gtrs-range:focus::-webkit-slider-thumb { box-shadow:0 4px 14px rgba(0,0,0,.6), 0 0 0 5px rgba(217,181,64,.25); }
+  .gtrs-range::-moz-range-thumb { width:18px; height:18px; border:none; border-radius:50%; background:#e6e9ee; cursor:pointer; }
+  .chip { transition: transform .12s; }
+  .chip:hover { transform: translateY(-1px); }
+  .pulse { animation: gtrsPulse 1.6s ease-in-out infinite; }
+  @keyframes gtrsPulse { 0%,100% { opacity:.6; } 50% { opacity:1; } }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+  import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  window.THREE = THREE; window.OrbitControls = OrbitControls;
+  window.RoomEnvironment = RoomEnvironment; window.GLTFLoader = GLTFLoader;
+  window.dispatchEvent(new Event('three-ready'));
+</script>
+</helmet>
+
+<div style="position:relative;width:100vw;height:100vh;overflow:hidden;background:radial-gradient(140% 90% at 50% 28%, #161b22 0%, #0a0d11 50%, #04060a 100%);font-family:Manrope,sans-serif;color:#e6e9ee;">
+
+  <!-- 3D viewport -->
+  <div ref="{{ contRef }}" style="position:absolute;inset:0;"></div>
+
+  <!-- LOADING OVERLAY -->
+  <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(6,8,11,.92);backdrop-filter:blur(8px);z-index:30;">
+      <div style="font:300 11px 'JetBrains Mono';letter-spacing:.32em;text-transform:uppercase;color:#d9b540;margin-bottom:18px;" class="pulse">Loading model</div>
+      <div style="font:700 30px Manrope;letter-spacing:-.015em;color:#f3f5f8;margin-bottom:6px;">Porsche 911 GT3 RS</div>
+      <div style="font:400 12px Manrope;letter-spacing:.18em;text-transform:uppercase;color:#7a8290;margin-bottom:32px;">18 MB · 291 meshes</div>
+      <div style="width:360px;height:2px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;">
+        <div style="height:100%;background:linear-gradient(90deg,#d9b540,#f3d76b);width:{{ progressPct }}%;transition:width .25s ease-out;"></div>
+      </div>
+      <div style="font:500 11px 'JetBrains Mono';letter-spacing:.22em;color:#7a8290;margin-top:14px;">{{ progressPct }}%</div>
+    </div>
+  </sc-if>
+
+  <!-- WORDMARK -->
+  <div style="position:absolute;top:36px;left:48px;z-index:5;">
+    <div style="font:300 12px/1 'JetBrains Mono';letter-spacing:.26em;text-transform:uppercase;color:#7a8290;margin-bottom:8px;">Porsche · 992.2</div>
+    <div style="font:700 30px/1 Manrope;letter-spacing:-.015em;color:#f3f5f8;">911 GT3 RS</div>
+    <div style="font:400 12px/1 Manrope;letter-spacing:.18em;text-transform:uppercase;color:#7a8290;margin-top:9px;">Anatomy &nbsp;·&nbsp; Layer 1 · 3D</div>
+  </div>
+
+  <!-- INFO CARD -->
+  <div style="position:absolute;top:36px;right:48px;width:320px;z-index:5;">
+    <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+      <div style="background:linear-gradient(180deg, rgba(20,24,30,.82), rgba(12,15,20,.82));backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:22px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <span style="font:500 10.5px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:#d9b540;">Selected component</span>
+          <button onClick="{{ onReset }}" aria-label="Deselect" style="cursor:pointer;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#9aa3ad;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:500 14px Manrope;padding:0;line-height:1;">&times;</button>
+        </div>
+        <div style="font:700 22px/1.15 Manrope;letter-spacing:-.012em;color:#f3f5f8;margin-bottom:12px;">{{ selName }}</div>
+        <div style="font:400 13.5px/1.6 Manrope;color:#a3acb6;">{{ selDesc }}</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ noSel }}" hint-placeholder-val="{{ false }}">
+      <div style="font:400 12px/1.6 Manrope;letter-spacing:.04em;color:#5d6571;text-align:right;">Drag to orbit · scroll to zoom<br/>Click a part of the car, or use the chips below.</div>
+    </sc-if>
+  </div>
+
+  <!-- BOTTOM CONTROLS -->
+  <div style="position:absolute;left:0;right:0;bottom:0;padding:0 48px 28px;display:flex;flex-direction:column;align-items:center;gap:20px;z-index:5;pointer-events:none;">
+
+    <!-- chips -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;pointer-events:auto;">
+      <button onClick="{{ onSelectWing }}"     class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipWingStyle }}">Rear wing</button>
+      <button onClick="{{ onSelectHood }}"     class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipHoodStyle }}">Hood</button>
+      <button onClick="{{ onSelectDoors }}"    class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipDoorsStyle }}">Doors</button>
+      <button onClick="{{ onSelectWheels }}"   class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipWheelsStyle }}">Wheels &amp; brakes</button>
+      <button onClick="{{ onSelectEngine }}"   class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipEngineStyle }}">Engine</button>
+      <button onClick="{{ onSelectExhaust }}"  class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipExhaustStyle }}">Exhaust</button>
+      <button onClick="{{ onSelectInterior }}" class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipInteriorStyle }}">Interior</button>
+    </div>
+
+    <!-- explode slider -->
+    <div style="display:flex;align-items:center;gap:20px;pointer-events:auto;background:rgba(10,13,17,.62);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:14px 22px;min-width:540px;">
+      <span style="font:500 10px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:#7a8290;width:80px;">Assembled</span>
+      <input type="range" min="0" max="100" value="{{ pct }}" onInput="{{ onSlider }}" class="gtrs-range" style="flex:1;min-width:280px;" />
+      <span style="font:500 10px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:#7a8290;width:80px;text-align:right;">Exploded</span>
+      <span style="font:600 13px 'JetBrains Mono';color:#d9b540;width:42px;text-align:right;">{{ pct }}%</span>
+    </div>
+  </div>
+
+  <!-- Attribution -->
+  <div style="position:absolute;bottom:8px;left:14px;font:400 9.5px 'JetBrains Mono';color:#4a5260;letter-spacing:.06em;z-index:5;">3D model: Black Snow · Sketchfab · <span style="color:#5d6571;">CC&nbsp;BY&nbsp;4.0</span></div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+function categoryOf(name) {
+  const n = name.toLowerCase();
+  if (n.includes('carbon_wing') || n.includes('gt3rs_spoiler')) return 'wing';
+  if (n.includes('carbon_hood')) return 'hood';
+  if (n.includes('door_l') || n.includes('door_r') || n.includes('doorpanel') || n.includes('doorglass') || n.includes('mirror_')) return 'doors';
+  if (n.includes('wheels_20x9') || n.includes('brakedisc') || /^object_4\./.test(n)) return 'wheels';
+  if (n === 'twixer_992_engine' || n.includes('intake_tt') || n.includes('transaxle') || n.includes('driveshaft') || n.includes('diff_f') || n.includes('radiator')) return 'engine';
+  if (n.includes('exhaust') || n.includes('muffler') || n.includes('heatshield')) return 'exhaust';
+  if (n.includes('seat_') || n.includes('seats_') || n.includes('dash_') || n.includes('steer_') || n.includes('pedal') || n.includes('shifter') || n.includes('gauges_screen') || n.includes('needle_tacho') || n.includes('signalstalk') || n.includes('fascia') || n.includes('black_dash') || n.includes('chrome_dash')) return 'interior';
+  return 'body';
+}
+
+const INFO = {
+  wing:     { name: 'Swan-neck rear wing',  desc: 'Top-mount struts keep the wing\u2019s high-pressure underside clean, generating significantly more downforce than a conventional bottom-mount design.' },
+  hood:     { name: 'Hood & frunk',          desc: 'Carbon-composite hood with a central duct feeding the front radiators. A small luggage compartment sits below.' },
+  doors:    { name: 'Doors & mirrors',       desc: 'Lightweight aluminium doors with magnesium frames and thinner side glazing \u2014 several kilos lighter than the standard 911 door.' },
+  wheels:   { name: 'Wheels & brakes',       desc: 'Forged center-lock wheels on carbon-ceramic discs (PCCB) with yellow calipers. Drilled discs vent heat and shed water on the road.' },
+  engine:   { name: 'Flat-six engine',       desc: '4.0 L naturally aspirated, mounted behind the rear axle. ~525 hp, a 9000 rpm redline, and dry-sump lubrication for sustained track loads.' },
+  exhaust:  { name: 'Exhaust system',        desc: 'Lightweight titanium exhaust with center-exit tailpipes \u2014 less mass, freer flow, and the trademark flat-six bark.' },
+  interior: { name: 'Interior & cockpit',    desc: 'Carbon bucket seats, six-point harnesses, and a stripped, driver-focused cockpit. Everything that doesn\u2019t make the car faster has gone.' },
+};
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { explode: 0, selected: null, loading: true, progress: 0 };
+    this.contRef = React.createRef();
+    this.parts = [];
+    this._catAmt = { wing: 0, hood: 0, doors: 0, wheels: 0, engine: 0, exhaust: 0, interior: 0, body: 0 };
+  }
+
+  componentDidMount() {
+    const ready = () => window.THREE && window.OrbitControls && window.RoomEnvironment && window.GLTFLoader;
+    const go = () => { if (this._init) return; this._init = true; this.init(); };
+    if (ready()) { go(); return; }
+    window.addEventListener('three-ready', () => { if (ready()) go(); });
+    this._poll = setInterval(() => { if (ready()) { clearInterval(this._poll); go(); } }, 120);
+  }
+
+  componentWillUnmount() {
+    cancelAnimationFrame(this._raf);
+    clearInterval(this._poll);
+    if (this._ro) this._ro.disconnect();
+    if (this.renderer) {
+      this.renderer.dispose();
+      try { this.renderer.forceContextLoss(); } catch (e) {}
+      if (this.renderer.domElement.parentNode) this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+    }
+  }
+
+  init() {
+    const THREE = window.THREE;
+    const container = this.contRef.current;
+    if (!container) return;
+    while (container.firstChild) container.removeChild(container.firstChild);
+
+    const W = container.clientWidth || 1200;
+    const H = container.clientHeight || 800;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(32, W / H, 0.05, 200);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+    renderer.setSize(W, H);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    renderer.domElement.style.display = 'block';
+    container.appendChild(renderer.domElement);
+    this.renderer = renderer; this.scene = scene; this.camera = camera;
+
+    // Studio environment
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new window.RoomEnvironment(), 0.04).texture;
+
+    // Lights
+    scene.add(new THREE.HemisphereLight(0xcfe0f5, 0x0a0d12, 0.35));
+    const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(5, 10, 6); scene.add(key);
+    const rim = new THREE.DirectionalLight(0xa3c5ff, 1.0); rim.position.set(-6, 4, -5); scene.add(rim);
+    const fill = new THREE.DirectionalLight(0xffffff, 0.45); fill.position.set(0, 2, 8); scene.add(fill);
+
+    // OrbitControls
+    const controls = new window.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.08;
+    controls.enablePan = false;
+    controls.autoRotate = true; controls.autoRotateSpeed = 0.35;
+    controls.addEventListener('start', () => { controls.autoRotate = false; });
+    this.controls = controls;
+
+    // Contact shadow (radial-gradient texture on a plane)
+    const sc = document.createElement('canvas'); sc.width = sc.height = 512;
+    const sctx = sc.getContext('2d');
+    const sg = sctx.createRadialGradient(256, 256, 0, 256, 256, 256);
+    sg.addColorStop(0, 'rgba(0,0,0,0.65)');
+    sg.addColorStop(0.55, 'rgba(0,0,0,0.18)');
+    sg.addColorStop(1, 'rgba(0,0,0,0)');
+    sctx.fillStyle = sg; sctx.fillRect(0, 0, 512, 512);
+    const sTex = new THREE.CanvasTexture(sc);
+    this._shadowMat = new THREE.MeshBasicMaterial({ map: sTex, transparent: true, depthWrite: false });
+    this._shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this._shadowMat);
+    this._shadow.rotation.x = -Math.PI / 2;
+    scene.add(this._shadow);
+
+    // Raycast picking
+    const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+    let down = null;
+    const setPtr = (e) => {
+      const r = renderer.domElement.getBoundingClientRect();
+      ptr.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+      ptr.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+    };
+    renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+    renderer.domElement.addEventListener('pointerup', e => {
+      if (!down) return;
+      const moved = Math.hypot(e.clientX - down[0], e.clientY - down[1]);
+      down = null;
+      if (moved > 6 || !this.parts.length) return;
+      setPtr(e);
+      ray.setFromCamera(ptr, camera);
+      const meshes = [];
+      this.parts.forEach(p => p.meshes.forEach(m => meshes.push(m)));
+      const hits = ray.intersectObjects(meshes, false);
+      if (!hits.length) { this.setState({ selected: null }); return; }
+      const hitMesh = hits[0].object;
+      const part = this.parts.find(p => p.meshes.indexOf(hitMesh) !== -1);
+      if (!part || part.cat === 'body') { this.setState({ selected: null }); return; }
+      this.setState(s => ({ selected: s.selected === part.cat ? null : part.cat }));
+    });
+
+    // Resize
+    const ro = new ResizeObserver(() => {
+      const w = container.clientWidth, h = container.clientHeight;
+      if (w && h) { renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+    });
+    ro.observe(container); this._ro = ro;
+
+    // Load model
+    const loader = new window.GLTFLoader();
+    loader.load(
+      resolveAsset('./assets/porsche_gt3_rs.glb'),
+      (gltf) => this.onLoaded(gltf),
+      (xhr) => {
+        if (xhr.total > 0) this.setState({ progress: xhr.loaded / xhr.total });
+        else this.setState({ progress: Math.min(0.95, this.state.progress + 0.04) });
+      },
+      (err) => { console.error('Failed to load GLB:', err); }
+    );
+
+    // Render loop
+    const tick = () => {
+      this._raf = requestAnimationFrame(tick);
+      this.tickExplode();
+      controls.update();
+      renderer.render(scene, camera);
+    };
+    tick();
+  }
+
+  onLoaded(gltf) {
+    const THREE = window.THREE;
+    const root = gltf.scene;
+    this.scene.add(root);
+    window.__gtrs = this;
+
+    // Descend to the node with many children (the actual content root)
+    let rootNode = root;
+    while (rootNode.children.length === 1) rootNode = rootNode.children[0];
+
+    // Ensure transforms are up to date
+    root.updateMatrixWorld(true);
+
+    // World bounding box
+    const worldBox = new THREE.Box3().setFromObject(rootNode);
+    const worldCenter = worldBox.getCenter(new THREE.Vector3());
+    const worldSize = worldBox.getSize(new THREE.Vector3());
+    const carScale = Math.max(worldSize.x, worldSize.z);
+
+    // Recenter & sit on ground
+    root.position.x -= worldCenter.x;
+    root.position.z -= worldCenter.z;
+    root.position.y -= worldBox.min.y;
+    root.updateMatrixWorld(true);
+
+    // Re-measure to know the longest horizontal axis (length axis = forward/back)
+    const wb2 = new THREE.Box3().setFromObject(rootNode);
+    const sz2 = wb2.getSize(new THREE.Vector3());
+    // For Porsche, length > width. Whichever of {x, z} is larger = car length.
+    const lengthAxis = sz2.x >= sz2.z ? 'x' : 'z';
+    const widthAxis  = lengthAxis === 'x' ? 'z' : 'x';
+
+    // Position shadow plane
+    const shadowSize = Math.max(sz2.x, sz2.z) * 1.6;
+    this._shadow.scale.set(shadowSize, shadowSize, 1);
+    this._shadow.position.set(0, 0.005, 0);
+
+    // Helper: convert a WORLD-space vector to a LOCAL-space displacement
+    // relative to the part's parent (so we can add it to part.position safely).
+    const tmpM3 = new THREE.Matrix3();
+    const toLocalVec = (worldVec, parent) => {
+      tmpM3.setFromMatrix4(parent.matrixWorld).invert();
+      return worldVec.clone().applyMatrix3(tmpM3);
+    };
+
+    // Categorise each top-level child
+    this.parts = [];
+    rootNode.children.forEach((child) => {
+      const cat = categoryOf(child.name);
+      const meshes = [];
+      child.traverse(o => { if (o.isMesh) meshes.push(o); });
+
+      // Part center in world space
+      const pbox = new THREE.Box3().setFromObject(child);
+      const pCenterWorld = pbox.getCenter(new THREE.Vector3());
+
+      // Car center in world space (after recentering, x=0, z=0; y = midheight)
+      const ccWorld = new THREE.Vector3(0, (wb2.min.y + wb2.max.y) / 2, 0);
+
+      // World-space outward direction
+      const worldDir = pCenterWorld.clone().sub(ccWorld);
+
+      // Apply category bias (in world axes)
+      const v = this.computeExplodeBiasWorld(cat, worldDir, sz2, lengthAxis);
+
+      // Convert to part's parent local space
+      const localVec = toLocalVec(v, child.parent);
+
+      this.parts.push({
+        name: child.name,
+        cat: cat,
+        obj: child,
+        base: child.position.clone(),
+        meshes,
+        explodeVec: localVec,
+      });
+    });
+
+    // Camera fit
+    const fitDist = Math.max(sz2.x, sz2.z) * 2.1;
+    const carHeight = sz2.y;
+    this.camera.position.set(fitDist * 0.85, carHeight * 1.05, fitDist);
+    this.controls.target.set(0, carHeight * 0.42, 0);
+    this.controls.minDistance = fitDist * 0.6;
+    this.controls.maxDistance = fitDist * 2.0;
+    this.controls.minPolarAngle = 0.4;
+    this.controls.maxPolarAngle = Math.PI / 2 - 0.02;
+    this.controls.saveState();
+
+    this.setState({ loading: false, progress: 1 });
+  }
+
+  computeExplodeBiasWorld(cat, worldDir, size, lengthAxis) {
+    const THREE = window.THREE;
+    const v = new THREE.Vector3();
+    const len = (lengthAxis === 'x' ? size.x : size.z);
+    const wid = (lengthAxis === 'x' ? size.z : size.x);
+    const h = size.y;
+    // "fwd" sign along length axis comes from the part's own offset
+    const fwdSign = (lengthAxis === 'x' ? Math.sign(worldDir.x) : Math.sign(worldDir.z)) || 1;
+    const sideSign = (lengthAxis === 'x' ? Math.sign(worldDir.z) : Math.sign(worldDir.x)) || 1;
+
+    const setLen = (mag) => { if (lengthAxis === 'x') v.x += mag; else v.z += mag; };
+    const setSide = (mag) => { if (lengthAxis === 'x') v.z += mag; else v.x += mag; };
+    const setUp = (mag) => { v.y += mag; };
+
+    switch (cat) {
+      case 'wing':     setUp(h * 1.1); setLen(-fwdSign * len * 0.0); break;
+      case 'hood':     setUp(h * 0.5); setLen(fwdSign * len * 0.35); break;
+      case 'doors':    setSide(sideSign * wid * 0.7); break;
+      case 'wheels':   setSide(sideSign * wid * 0.55); setLen(fwdSign * len * 0.05); break;
+      case 'engine':   setUp(-h * 0.55); setLen(fwdSign * len * 0.30); break;
+      case 'exhaust':  setUp(-h * 0.25); setLen(fwdSign * len * 0.55); break;
+      case 'interior': setUp(h * 1.4); break;
+      case 'body':     /* zero */ break;
+    }
+    return v;
+  }
+
+  tickExplode() {
+    if (!this.parts.length) return;
+    const m = this.state.explode, sel = this.state.selected;
+    const k = 0.13;
+    Object.keys(this._catAmt).forEach(cat => {
+      let t;
+      if (sel === null) t = m;
+      else if (sel === cat) t = 1;
+      else t = 0;
+      this._catAmt[cat] += (t - this._catAmt[cat]) * k;
+    });
+    // Body dim: when soloing a part, dim everything else
+    const bodyDim = sel ? (sel === 'engine' || sel === 'interior' || sel === 'exhaust' ? 0.18 : 0.42) : 1;
+    const partOpa = (cat) => (sel && sel !== cat) ? bodyDim : 1;
+
+    this.parts.forEach(p => {
+      const a = this._catAmt[p.cat] || 0;
+      p.obj.position.copy(p.base).addScaledVector(p.explodeVec, a);
+      // opacity dim
+      const op = partOpa(p.cat);
+      if (p._opa !== op) {
+        p._opa = op;
+        p.meshes.forEach(m => {
+          if (!m.userData._matCloned) {
+            // clone material so we don't dim shared materials globally
+            if (Array.isArray(m.material)) m.material = m.material.map(mm => mm.clone());
+            else m.material = m.material.clone();
+            m.userData._matCloned = true;
+          }
+          const apply = (mat) => {
+            mat.transparent = op < 1 ? true : mat.userData._wasTransparent || mat.transparent;
+            if (mat.userData._wasTransparent === undefined) mat.userData._wasTransparent = mat.transparent;
+            mat.opacity = op;
+          };
+          if (Array.isArray(m.material)) m.material.forEach(apply);
+          else apply(m.material);
+        });
+      }
+    });
+  }
+
+  onSlider(e) {
+    const v = +e.target.value / 100;
+    this.setState({ explode: v, selected: null });
+  }
+  selectPart(p) { this.setState(s => ({ selected: s.selected === p ? null : p })); }
+  reset() { this.setState({ selected: null }); }
+
+  renderVals() {
+    const m = this.state.explode;
+    const sel = this.state.selected;
+    const cur = sel ? INFO[sel] : null;
+    const chip = (key) => sel === key
+      ? 'background-color:#d9b540;color:#1a1408;border-color:#d9b540;'
+      : 'background-color:rgba(255,255,255,0.035);color:#cdd2d8;border-color:rgba(255,255,255,0.1);';
+
+    return {
+      contRef: this.contRef,
+      loading: this.state.loading,
+      progressPct: Math.round(this.state.progress * 100),
+      pct: Math.round(m * 100),
+      hasSel: !!cur, noSel: !cur,
+      selName: cur ? cur.name : '',
+      selDesc: cur ? cur.desc : '',
+      onSlider: (e) => this.onSlider(e),
+      onReset: () => this.reset(),
+      onSelectWing:     () => this.selectPart('wing'),
+      onSelectHood:     () => this.selectPart('hood'),
+      onSelectDoors:    () => this.selectPart('doors'),
+      onSelectWheels:   () => this.selectPart('wheels'),
+      onSelectEngine:   () => this.selectPart('engine'),
+      onSelectExhaust:  () => this.selectPart('exhaust'),
+      onSelectInterior: () => this.selectPart('interior'),
+      chipWingStyle:     chip('wing'),
+      chipHoodStyle:     chip('hood'),
+      chipDoorsStyle:    chip('doors'),
+      chipWheelsStyle:   chip('wheels'),
+      chipEngineStyle:   chip('engine'),
+      chipExhaustStyle:  chip('exhaust'),
+      chipInteriorStyle: chip('interior'),
+    };
+  }
+}
+</script>
+</body>
+</html>

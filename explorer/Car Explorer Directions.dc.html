@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./asset-config.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  .exp-range{-webkit-appearance:none;appearance:none;height:3px;border-radius:3px;background:rgba(255,255,255,.16);outline:none;cursor:pointer;}
+  .exp-range::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--acc,#fff);cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.55);border:2px solid rgba(0,0,0,.25);}
+  .exp-range::-moz-range-thumb{width:15px;height:15px;border:none;border-radius:50%;background:var(--acc,#fff);cursor:pointer;}
+  .chat-in::placeholder{color:rgba(255,255,255,.34);}
+  .chat-in:focus{outline:none;}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+  import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+  import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+  window.THREE = THREE; window.OrbitControls = OrbitControls;
+  window.RoomEnvironment = RoomEnvironment; window.RoundedBoxGeometry = RoundedBoxGeometry;
+  window.__threeReady = true; window.dispatchEvent(new Event('three-ready'));
+</script>
+<script src="car-builder.js"></script>
+</helmet>
+
+<!-- ============ DIRECTION A — SHOWROOM ============ -->
+<div style="position:absolute;left:40px;top:96px;width:1060px;font-family:Archivo,sans-serif;">
+  <div data-drags-parent="1" style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+    <span style="font:700 13px Archivo;color:#e9edf2;letter-spacing:.04em;">Direction A</span>
+    <span style="font:500 12px Archivo;color:#7c8694;letter-spacing:.18em;text-transform:uppercase;">Showroom</span>
+  </div>
+  <div data-screen-label="Direction A — Showroom" style="position:relative;width:1060px;height:680px;border-radius:8px;overflow:hidden;background:radial-gradient(125% 95% at 50% 14%, #1b242f 0%, #0b0f15 52%, #05070a 100%);box-shadow:0 36px 90px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.04);">
+    <div ref="{{ contA }}" style="position:absolute;inset:0;"></div>
+
+    <div style="position:absolute;inset:0;pointer-events:none;">
+      <!-- wordmark -->
+      <div style="position:absolute;top:26px;left:30px;">
+        <div style="font:700 17px Archivo;letter-spacing:.02em;color:#f1f4f8;">ATELIER<span style="color:#c8a96a;">911</span></div>
+        <div style="font:500 10.5px Archivo;letter-spacing:.26em;text-transform:uppercase;color:#6b7682;margin-top:3px;">Anatomy of an icon</div>
+      </div>
+      <div style="position:absolute;top:30px;right:30px;font:500 11px Archivo;letter-spacing:.14em;text-transform:uppercase;color:#5f6976;">Drag to orbit · Click a part</div>
+
+      <!-- right rail info -->
+      <div style="position:absolute;top:96px;right:30px;width:266px;pointer-events:auto;background:linear-gradient(180deg, rgba(20,26,34,.82), rgba(12,16,21,.82));backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:20px;">
+        <div style="font:600 10px Archivo;letter-spacing:.2em;text-transform:uppercase;color:#c8a96a;margin-bottom:10px;">{{ aCat }}</div>
+        <div style="font:600 21px Archivo;color:#f2f5f8;line-height:1.15;margin-bottom:12px;">{{ aName }}</div>
+        <div style="font:400 13px/1.6 Archivo;color:#9aa4b1;">{{ aDesc }}</div>
+        <div style="display:flex;gap:8px;margin-top:18px;">
+          <button onClick="{{ onSwapA }}" style="flex:1;pointer-events:auto;cursor:pointer;background:#c8a96a;color:#1a140a;border:none;border-radius:7px;padding:10px;font:600 12px Archivo;">Swap wheels</button>
+          <button onClick="{{ onResetA }}" style="pointer-events:auto;cursor:pointer;background:rgba(255,255,255,.07);color:#cfd6de;border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:10px 14px;font:600 12px Archivo;">Reset</button>
+        </div>
+      </div>
+
+      <!-- explode slider -->
+      <div style="position:absolute;left:30px;bottom:84px;width:380px;pointer-events:auto;">
+        <div style="display:flex;justify-content:space-between;font:500 10.5px Archivo;letter-spacing:.16em;text-transform:uppercase;color:#7c8694;margin-bottom:9px;"><span>Assembled</span><span style="color:#c8a96a;">{{ expA }}%</span><span>Exploded</span></div>
+        <input type="range" min="0" max="100" value="0" onInput="{{ onExpA }}" class="exp-range" style="--acc:#c8a96a;width:380px;" />
+      </div>
+
+      <!-- chat bar -->
+      <div style="position:absolute;left:30px;right:30px;bottom:26px;height:40px;pointer-events:auto;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:0 14px;">
+        <span style="width:7px;height:7px;border-radius:50%;background:#c8a96a;box-shadow:0 0 10px #c8a96a;"></span>
+        <input class="chat-in" placeholder="Ask the assistant — “what does the flat-six do?”" style="flex:1;background:transparent;border:none;color:#dfe5ec;font:400 13px Archivo;" />
+        <span style="font:600 11px Archivo;color:#5f6976;letter-spacing:.06em;">AI · preview</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DIRECTION B — SCHEMATIC ============ -->
+<div style="position:absolute;left:1180px;top:96px;width:1060px;font-family:'IBM Plex Mono',monospace;">
+  <div data-drags-parent="1" style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+    <span style="font:600 13px 'IBM Plex Mono';color:#e9edf2;">Direction B</span>
+    <span style="font:500 12px 'IBM Plex Mono';color:#7c8694;letter-spacing:.14em;text-transform:uppercase;">Schematic</span>
+  </div>
+  <div data-screen-label="Direction B — Schematic" style="position:relative;width:1060px;height:680px;border-radius:8px;overflow:hidden;background:#070b0f;box-shadow:0 36px 90px rgba(0,0,0,.55);">
+    <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(56,212,230,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(56,212,230,.05) 1px,transparent 1px);background-size:38px 38px;pointer-events:none;"></div>
+    <div ref="{{ contB }}" style="position:absolute;inset:0;left:250px;"></div>
+
+    <div style="position:absolute;inset:0;pointer-events:none;">
+      <!-- corner brackets -->
+      <div style="position:absolute;top:18px;left:18px;width:26px;height:26px;border-top:1.5px solid #38d4e6;border-left:1.5px solid #38d4e6;opacity:.6;"></div>
+      <div style="position:absolute;top:18px;right:18px;width:26px;height:26px;border-top:1.5px solid #38d4e6;border-right:1.5px solid #38d4e6;opacity:.6;"></div>
+      <div style="position:absolute;bottom:18px;left:18px;width:26px;height:26px;border-bottom:1.5px solid #38d4e6;border-left:1.5px solid #38d4e6;opacity:.6;"></div>
+      <div style="position:absolute;bottom:18px;right:18px;width:26px;height:26px;border-bottom:1.5px solid #38d4e6;border-right:1.5px solid #38d4e6;opacity:.6;"></div>
+
+      <!-- left systems index -->
+      <div style="position:absolute;top:30px;left:30px;width:206px;">
+        <div style="font:600 12px 'IBM Plex Mono';color:#38d4e6;letter-spacing:.08em;">911 · SYSTEMS_INDEX</div>
+        <div style="font:400 9.5px 'IBM Plex Mono';color:#566571;margin:5px 0 18px;letter-spacing:.04em;">21 COMPONENTS · 7 GROUPS</div>
+        <div style="display:flex;flex-direction:column;gap:1px;">
+          <div style="display:flex;justify-content:space-between;padding:7px 9px;background:rgba(56,212,230,.06);border-left:2px solid #38d4e6;font:500 11px 'IBM Plex Mono';color:#cdd6dd;">Body<span style="color:#566571;">07</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 9px;font:500 11px 'IBM Plex Mono';color:#9aa4b1;">Powertrain<span style="color:#566571;">02</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 9px;font:500 11px 'IBM Plex Mono';color:#9aa4b1;">Wheels &amp; Brakes<span style="color:#566571;">04</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 9px;font:500 11px 'IBM Plex Mono';color:#9aa4b1;">Glass<span style="color:#566571;">02</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 9px;font:500 11px 'IBM Plex Mono';color:#9aa4b1;">Aero<span style="color:#566571;">02</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 9px;font:500 11px 'IBM Plex Mono';color:#9aa4b1;">Lighting<span style="color:#566571;">02</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 9px;font:500 11px 'IBM Plex Mono';color:#9aa4b1;">Chassis<span style="color:#566571;">01</span></div>
+        </div>
+        <!-- explode -->
+        <div style="margin-top:22px;pointer-events:auto;">
+          <div style="font:500 9.5px 'IBM Plex Mono';color:#566571;letter-spacing:.1em;margin-bottom:8px;">DISASSEMBLY &nbsp;[{{ expB }}%]</div>
+          <input type="range" min="0" max="100" value="0" onInput="{{ onExpB }}" class="exp-range" style="--acc:#38d4e6;width:206px;" />
+        </div>
+      </div>
+
+      <!-- top-right readout -->
+      <div style="position:absolute;top:30px;right:30px;width:236px;text-align:right;pointer-events:auto;">
+        <div style="font:500 9.5px 'IBM Plex Mono';color:#38d4e6;letter-spacing:.12em;margin-bottom:6px;">// SELECTED</div>
+        <div style="font:600 16px 'IBM Plex Mono';color:#eaf2f4;line-height:1.25;">{{ bName }}</div>
+        <div style="font:500 10px 'IBM Plex Mono';color:#566571;letter-spacing:.08em;margin-top:4px;">{{ bCat }}</div>
+        <div style="font:400 11px/1.6 'IBM Plex Mono';color:#8c97a3;margin-top:12px;border-top:1px solid rgba(56,212,230,.16);padding-top:12px;">{{ bDesc }}</div>
+      </div>
+
+      <!-- chat toggle (bottom-left) -->
+      <button onClick="{{ onToggleChatB }}" style="position:absolute;left:30px;bottom:30px;width:206px;pointer-events:auto;cursor:pointer;text-align:left;background:rgba(8,16,20,.85);border:1px solid rgba(56,212,230,.32);border-radius:4px;padding:11px 12px;font:500 10.5px 'IBM Plex Mono';color:#cdd6dd;letter-spacing:.1em;">{{ chatLabelB }}</button>
+
+      <!-- chat panel (right, slides in when open) -->
+      <sc-if value="{{ chatOpenB }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;top:280px;right:28px;bottom:28px;width:340px;pointer-events:auto;display:flex;flex-direction:column;background:rgba(8,16,20,.92);border:1px solid rgba(56,212,230,.32);border-radius:4px;overflow:hidden;">
+          <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(56,212,230,.2);">
+            <span style="width:8px;height:8px;border-radius:50%;background:#38d4e6;box-shadow:0 0 9px #38d4e6;"></span>
+            <span style="font:600 11px 'IBM Plex Mono';color:#cdd6dd;letter-spacing:.12em;">ASSISTANT // ACTIVE</span>
+            <button onClick="{{ onToggleChatB }}" style="margin-left:auto;cursor:pointer;background:transparent;border:none;color:#7a8893;font:500 18px 'IBM Plex Mono';padding:0 6px;line-height:1;">&times;</button>
+          </div>
+          <div style="flex:1;padding:14px;display:flex;flex-direction:column;gap:11px;overflow:hidden;font:400 11.5px/1.55 'IBM Plex Mono';">
+            <div style="color:#566571;">// session_init</div>
+            <div style="color:#38d4e6;">&gt; describe engine</div>
+            <div style="color:#cdd6dd;">flat-six mounted behind the rear axle. low-slung placement loads the driven wheels for traction.</div>
+            <div style="color:#38d4e6;">&gt; why rear-engine?</div>
+            <div style="color:#cdd6dd;">shifts mass over the drive wheels and opens up a front luggage compartment (frunk).</div>
+          </div>
+          <div style="padding:12px 14px;border-top:1px solid rgba(56,212,230,.2);display:flex;align-items:center;gap:8px;">
+            <span style="color:#38d4e6;font:600 12px 'IBM Plex Mono';">&gt;</span>
+            <input class="chat-in" placeholder="query part_" style="flex:1;background:transparent;border:none;color:#cdd6dd;font:400 11.5px 'IBM Plex Mono';" />
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DIRECTION C — IMMERSIVE ============ -->
+<div style="position:absolute;left:2320px;top:96px;width:1140px;font-family:'Space Grotesk',sans-serif;">
+  <div data-drags-parent="1" style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+    <span style="font:700 13px 'Space Grotesk';color:#e9edf2;">Direction C</span>
+    <span style="font:500 12px 'Space Grotesk';color:#7c8694;letter-spacing:.16em;text-transform:uppercase;">Immersive · AI-forward</span>
+  </div>
+  <div data-screen-label="Direction C — Immersive" style="position:relative;width:1140px;height:720px;border-radius:8px;overflow:hidden;background:radial-gradient(130% 100% at 28% 30%, #221016 0%, #0c0a0d 55%, #060507 100%);box-shadow:0 36px 90px rgba(0,0,0,.6);">
+    <div ref="{{ contC }}" style="position:absolute;inset:0;"></div>
+
+    <div style="position:absolute;inset:0;pointer-events:none;">
+      <!-- header -->
+      <div style="position:absolute;top:28px;left:34px;">
+        <div style="font:700 18px 'Space Grotesk';letter-spacing:-.01em;color:#f4f1f2;">Carbon<span style="color:#e85a4d;">/</span>911</div>
+        <div style="font:500 10.5px 'Space Grotesk';letter-spacing:.2em;text-transform:uppercase;color:#7a6e72;margin-top:3px;">Talk to the machine</div>
+      </div>
+
+      <!-- explode segmented bottom-left -->
+      <div style="position:absolute;left:34px;bottom:34px;width:300px;pointer-events:auto;">
+        <div style="display:flex;justify-content:space-between;font:500 10.5px 'Space Grotesk';letter-spacing:.14em;text-transform:uppercase;color:#8a7e82;margin-bottom:9px;"><span>Explode</span><span style="color:#e85a4d;">{{ expC }}%</span></div>
+        <input type="range" min="0" max="100" value="0" onInput="{{ onExpC }}" class="exp-range" style="--acc:#e85a4d;width:300px;" />
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button onClick="{{ onSwapC }}" style="pointer-events:auto;cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#e7dfe1;border-radius:20px;padding:8px 16px;font:600 12px 'Space Grotesk';">Swap wheels</button>
+          <button onClick="{{ onResetC }}" style="pointer-events:auto;cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#e7dfe1;border-radius:20px;padding:8px 16px;font:600 12px 'Space Grotesk';">Reset view</button>
+        </div>
+      </div>
+
+      <!-- AI assistant panel right -->
+      <sc-if value="{{ chatOpenC }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;top:28px;right:28px;bottom:28px;width:340px;pointer-events:auto;display:flex;flex-direction:column;background:rgba(18,15,18,.55);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden;">
+        <div style="padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px;">
+          <span style="width:9px;height:9px;border-radius:50%;background:#e85a4d;box-shadow:0 0 12px #e85a4d;"></span>
+          <span style="font:600 13px 'Space Grotesk';color:#f1ebec;">Assistant</span>
+          <span style="margin-left:auto;font:500 10px 'Space Grotesk';letter-spacing:.1em;text-transform:uppercase;color:#7a6e72;">Live</span>
+          <button onClick="{{ onToggleChatC }}" aria-label="Close assistant" style="cursor:pointer;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#e7dfe1;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:600 14px 'Space Grotesk';padding:0;line-height:1;">&times;</button>
+        </div>
+        <!-- context card -->
+        <div style="margin:16px 18px;padding:14px;background:rgba(232,90,77,.09);border:1px solid rgba(232,90,77,.28);border-radius:10px;">
+          <div style="font:600 10px 'Space Grotesk';letter-spacing:.16em;text-transform:uppercase;color:#e85a4d;margin-bottom:7px;">{{ cCat }} · in focus</div>
+          <div style="font:600 16px 'Space Grotesk';color:#f3eeef;margin-bottom:8px;">{{ cName }}</div>
+          <div style="font:400 12.5px/1.55 'Space Grotesk';color:#b3a8ac;">{{ cDesc }}</div>
+        </div>
+        <!-- messages -->
+        <div style="flex:1;padding:4px 18px;display:flex;flex-direction:column;gap:12px;overflow:hidden;">
+          <div style="align-self:flex-end;max-width:80%;background:#e85a4d;color:#1a0c0a;padding:9px 13px;border-radius:14px 14px 4px 14px;font:500 12.5px 'Space Grotesk';">Why is the engine at the back?</div>
+          <div style="align-self:flex-start;max-width:88%;background:rgba(255,255,255,.06);color:#d8d0d3;padding:9px 13px;border-radius:14px 14px 14px 4px;font:400 12.5px/1.5 'Space Grotesk';">Rear placement loads the driven wheels for traction and gives the 911 its unmistakable balance — tap the engine to see it lift out.</div>
+        </div>
+        <div style="margin:14px 18px;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:9px 16px;">
+          <input class="chat-in" placeholder="Ask anything about this car…" style="flex:1;background:transparent;border:none;color:#e7dfe1;font:400 13px 'Space Grotesk';" />
+          <span style="width:26px;height:26px;border-radius:50%;background:#e85a4d;display:flex;align-items:center;justify-content:center;color:#1a0c0a;font:700 14px 'Space Grotesk';">↑</span>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- reopener tab: shows on right edge when chat is closed -->
+      <sc-if value="{{ chatClosedC }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ onToggleChatC }}" aria-label="Open assistant" style="position:absolute;top:50%;right:0;transform:translateY(-50%);pointer-events:auto;cursor:pointer;width:34px;height:78px;background:rgba(18,15,18,.78);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.12);border-right:none;border-radius:10px 0 0 10px;color:#e85a4d;font:600 22px 'Space Grotesk';display:flex;align-items:center;justify-content:center;padding:0;box-shadow:-6px 0 24px rgba(0,0,0,.35);">&#8249;</button>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: [null, null, null], exp: [0, 0, 0], chatOpenB: false, chatOpenC: true };
+    this.contA = React.createRef();
+    this.contB = React.createRef();
+    this.contC = React.createRef();
+    this.handles = [];
+  }
+
+  componentDidMount() {
+    const ready = () => window.THREE && window.OrbitControls && window.RoomEnvironment && window.RoundedBoxGeometry && window.CarKit;
+    const go = () => { if (this._init) return; this._init = true; this.initAll(); };
+    if (ready()) { go(); return; }
+    window.addEventListener('three-ready', () => { if (ready()) go(); });
+    this._poll = setInterval(() => { if (ready()) { clearInterval(this._poll); go(); } }, 120);
+  }
+
+  componentWillUnmount() {
+    cancelAnimationFrame(this._raf);
+    clearInterval(this._poll);
+    this.handles.forEach(h => h && h.dispose && h.dispose());
+  }
+
+  initAll() {
+    const cfgs = [
+      { ref: this.contA, paint: 0x2a5a86, accent: '#c8a96a', rim: 0x6ea8ff },
+      { ref: this.contB, paint: 0x3a434f, accent: '#38d4e6', rim: 0x2bd6e6 },
+      { ref: this.contC, paint: 0xb01219, accent: '#e85a4d', rim: 0xff5a4d },
+    ];
+    cfgs.forEach((c, i) => {
+      if (c.ref.current) {
+        this.handles[i] = this.initScene(c.ref.current, {
+          paint: c.paint, accent: c.accent, rimColor: c.rim,
+          onSelect: (ud) => this.handleSelect(i, ud),
+        });
+      }
+    });
+    const tick = () => { this._raf = requestAnimationFrame(tick); this.handles.forEach(h => h && h.frame()); };
+    tick();
+  }
+
+  handleSelect(i, ud) {
+    this.setState(s => { const sel = s.sel.slice(); sel[i] = ud; return { sel }; });
+  }
+  onExp(i, v) {
+    this.setState(s => { const exp = s.exp.slice(); exp[i] = v; return { exp }; });
+    if (this.handles[i]) this.handles[i].setExplode(v / 100);
+  }
+  swap(i) { if (this.handles[i]) this.handles[i].swap(); }
+  reset(i) { if (this.handles[i]) this.handles[i].reset(); }
+  toggleChatB() {
+    this.setState(s => {
+      const open = !s.chatOpenB;
+      const c = this.contB.current;
+      if (c) c.style.right = open ? '380px' : '0px';
+      if (this.handles[1]) this.handles[1].setZoom(open ? 11.5 : 8.7);
+      return { chatOpenB: open };
+    });
+  }
+  toggleChatC() { this.setState(s => ({ chatOpenC: !s.chatOpenC })); }
+
+  initScene(container, opts) {
+    const THREE = window.THREE;
+    while (container.firstChild) container.removeChild(container.firstChild);
+    const W0 = container.clientWidth || 800, H0 = container.clientHeight || 600;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(36, W0 / H0, 0.1, 100);
+    camera.position.set(5.4, 2.5, 6.4);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+    renderer.setSize(W0, H0);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.domElement.style.display = 'block';
+    container.appendChild(renderer.domElement);
+
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new window.RoomEnvironment(), 0.04).texture;
+
+    scene.add(new THREE.HemisphereLight(0xcfe0f5, 0x0a0d12, 0.55));
+    const key = new THREE.DirectionalLight(0xffffff, 2.3); key.position.set(5, 9, 6); scene.add(key);
+    const rim = new THREE.DirectionalLight(opts.rimColor || 0x6ea8ff, 1.5); rim.position.set(-6, 3.5, -5); scene.add(rim);
+    const fill = new THREE.DirectionalLight(0xffffff, 0.5); fill.position.set(0, 2, 8); scene.add(fill);
+
+    const built = window.CarKit.build({ THREE, RoundedBox: window.RoundedBoxGeometry, paint: opts.paint });
+    const group = built.group, parts = built.parts;
+    scene.add(group);
+
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(8, 56), new THREE.MeshStandardMaterial({ color: 0x05070a, metalness: 0.0, roughness: 0.92 }));
+    floor.rotation.x = -Math.PI / 2; floor.position.y = -0.02; scene.add(floor);
+
+    const controls = new window.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.08; controls.enablePan = false;
+    controls.minDistance = 4.6; controls.maxDistance = 13;
+    controls.target.set(0, 0.7, 0);
+    controls.minPolarAngle = 0.45; controls.maxPolarAngle = Math.PI / 2.04;
+    controls.autoRotate = true; controls.autoRotateSpeed = 0.55;
+    controls.saveState();
+    controls.addEventListener('start', () => { controls.autoRotate = false; });
+
+    // raycasting + highlight
+    const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+    let hovered = null, selected = null;
+    const accent = new THREE.Color(opts.accent);
+
+    function setPtr(e) {
+      const r = renderer.domElement.getBoundingClientRect();
+      ptr.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+      ptr.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+    }
+    function pick() {
+      ray.setFromCamera(ptr, camera);
+      const hits = ray.intersectObjects(parts, true);
+      return hits.length ? hits[0].object.userData.owner : null;
+    }
+    function highlight(part, on, intensity) {
+      part.traverse(m => {
+        if (!m.isMesh || !m.material || !m.material.emissive) return;
+        if (!m.userData._cloned) { m.material = m.material.clone(); m.userData._cloned = true; m.userData._oe = m.material.emissive.clone(); m.userData._oi = m.material.emissiveIntensity || 0; }
+        if (on) { m.material.emissive.copy(accent); m.material.emissiveIntensity = intensity; }
+        else { m.material.emissive.copy(m.userData._oe); m.material.emissiveIntensity = m.userData._oi; }
+      });
+    }
+    renderer.domElement.addEventListener('pointermove', e => {
+      setPtr(e); const o = pick();
+      if (o !== hovered) {
+        if (hovered && hovered !== selected) highlight(hovered, false);
+        hovered = o;
+        if (hovered && hovered !== selected) highlight(hovered, true, 0.22);
+      }
+      renderer.domElement.style.cursor = o ? 'pointer' : 'grab';
+    });
+    let down = null;
+    renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+    renderer.domElement.addEventListener('pointerup', e => {
+      if (!down) return; const moved = Math.hypot(e.clientX - down[0], e.clientY - down[1]); down = null;
+      if (moved > 6) return;
+      setPtr(e); const o = pick();
+      if (selected) highlight(selected, false);
+      selected = o;
+      if (o) highlight(o, true, 0.5);
+      opts.onSelect(o ? o.userData : null);
+    });
+
+    let explodeCur = 0, explodeTarget = 0;
+    let zoomTarget = null;
+    const v = new THREE.Vector3();
+
+    const ro = new ResizeObserver(() => {
+      const w = container.clientWidth, h = container.clientHeight;
+      if (w && h) { renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+    });
+    ro.observe(container);
+
+    return {
+      frame() {
+        explodeCur += (explodeTarget - explodeCur) * 0.13;
+        if (zoomTarget != null) {
+          const dir = camera.position.clone().sub(controls.target);
+          const cur = dir.length();
+          if (Math.abs(zoomTarget - cur) < 0.02) zoomTarget = null;
+          else { dir.setLength(cur + (zoomTarget - cur) * 0.1); camera.position.copy(controls.target).add(dir); }
+        }
+        for (let i = 0; i < parts.length; i++) {
+          const ud = parts[i].userData;
+          parts[i].position.copy(ud.base).addScaledVector(ud.explode, explodeCur);
+        }
+        controls.update();
+        renderer.render(scene, camera);
+      },
+      setExplode(t) { explodeTarget = t; },
+      setZoom(d) {
+        zoomTarget = d;
+        if (d > controls.maxDistance - 0.1) controls.maxDistance = d + 0.5;
+      },
+      reset() {
+        explodeTarget = 0;
+        controls.reset(); controls.autoRotate = true;
+        if (selected) { highlight(selected, false); selected = null; }
+        opts.onSelect(null);
+      },
+      swap() {
+        built.materials.rim.color.getHexString() === 'd2d6dc'
+          ? built.materials.rim.color.set(0x2a2d33)
+          : built.materials.rim.color.set(0xd2d6dc);
+      },
+      dispose() {
+        ro.disconnect();
+        renderer.dispose();
+        try { renderer.forceContextLoss(); } catch (e) {}
+        if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
+      },
+    };
+  }
+
+  renderVals() {
+    const blank = 'Click any part of the car to inspect it, or pull the slider to explode the whole assembly apart.';
+    const disp = (ud) => ud
+      ? { name: ud.partName, cat: ud.cat, desc: ud.desc }
+      : { name: 'Select a component', cat: 'Overview', desc: blank };
+    const a = disp(this.state.sel[0]), b = disp(this.state.sel[1]), c = disp(this.state.sel[2]);
+    return {
+      contA: this.contA, contB: this.contB, contC: this.contC,
+      aName: a.name, aCat: a.cat, aDesc: a.desc,
+      bName: b.name, bCat: b.cat, bDesc: b.desc,
+      cName: c.name, cCat: c.cat, cDesc: c.desc,
+      expA: this.state.exp[0], expB: this.state.exp[1], expC: this.state.exp[2],
+      onExpA: (e) => this.onExp(0, +e.target.value),
+      onExpB: (e) => this.onExp(1, +e.target.value),
+      onExpC: (e) => this.onExp(2, +e.target.value),
+      onSwapA: () => this.swap(0), onSwapC: () => this.swap(2),
+      onResetA: () => this.reset(0), onResetB: () => this.reset(1), onResetC: () => this.reset(2),
+      chatOpenB: this.state.chatOpenB, chatOpenC: this.state.chatOpenC, chatClosedC: !this.state.chatOpenC,
+      onToggleChatB: () => this.toggleChatB(), onToggleChatC: () => this.toggleChatC(),
+      chatLabelB: this.state.chatOpenB ? '\u25CF  ASSISTANT  \u00B7  CLOSE' : '\u25B6  OPEN ASSISTANT',
+    };
+  }
+}
+</script>
+</body>
+</html>

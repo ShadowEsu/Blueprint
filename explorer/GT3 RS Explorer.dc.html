@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./asset-config.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #06080b; }
+  .gtrs-range { -webkit-appearance:none; appearance:none; height:2px; border-radius:2px; background:rgba(255,255,255,.13); outline:none; cursor:pointer; }
+  .gtrs-range::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:#e6e9ee; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.6), 0 0 0 4px rgba(217,181,64,.0); transition:box-shadow .18s; }
+  .gtrs-range:hover::-webkit-slider-thumb, .gtrs-range:focus::-webkit-slider-thumb { box-shadow:0 4px 14px rgba(0,0,0,.6), 0 0 0 5px rgba(217,181,64,.22); }
+  .gtrs-range::-moz-range-thumb { width:18px; height:18px; border:none; border-radius:50%; background:#e6e9ee; cursor:pointer; }
+  g[data-part] { transition: transform .55s cubic-bezier(.22,.61,.36,1), opacity .35s ease; transform-box: fill-box; transform-origin: center; }
+  g[data-part]:hover { filter: drop-shadow(0 0 14px rgba(217,181,64,.45)); }
+  .chip { transition: transform .12s; }
+  .chip:hover { transform: translateY(-1px); }
+</style>
+</helmet>
+
+<div style="position:relative;width:100vw;height:100vh;overflow:hidden;background:radial-gradient(140% 90% at 50% 30%, #161b22 0%, #0a0d11 50%, #04060a 100%);font-family:Manrope,sans-serif;color:#e6e9ee;">
+
+  <!-- top-left wordmark -->
+  <div style="position:absolute;top:36px;left:48px;z-index:5;">
+    <div style="font:300 12px/1 'JetBrains Mono';letter-spacing:.26em;text-transform:uppercase;color:#7a8290;margin-bottom:8px;">Porsche · 992.2</div>
+    <div style="font:700 30px/1 Manrope;letter-spacing:-.015em;color:#f3f5f8;">911 GT3 RS</div>
+    <div style="font:400 12px/1 Manrope;letter-spacing:.18em;text-transform:uppercase;color:#7a8290;margin-top:9px;">Anatomy &nbsp;·&nbsp; Layer 1</div>
+  </div>
+
+  <!-- top-right: part info -->
+  <div style="position:absolute;top:36px;right:48px;width:320px;z-index:5;">
+    <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+      <div style="background:linear-gradient(180deg, rgba(20,24,30,.78), rgba(12,15,20,.78));backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:22px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <span style="font:500 10.5px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:#d9b540;">Selected component</span>
+          <button onClick="{{ onReset }}" aria-label="Deselect" style="cursor:pointer;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#9aa3ad;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:500 14px Manrope;padding:0;line-height:1;">&times;</button>
+        </div>
+        <div style="font:700 22px/1.15 Manrope;letter-spacing:-.012em;color:#f3f5f8;margin-bottom:12px;">{{ selName }}</div>
+        <div style="font:400 13.5px/1.6 Manrope;color:#a3acb6;">{{ selDesc }}</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ noSel }}" hint-placeholder-val="{{ true }}">
+      <div style="font:400 12px/1.6 Manrope;letter-spacing:.04em;color:#5d6571;text-align:right;">Drag the EXPLODE bar below,&nbsp;<br/>or click any part of the car.</div>
+    </sc-if>
+  </div>
+
+  <!-- the car -->
+  <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%;">
+    <defs>
+      <linearGradient id="bodyG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#eef1f5"/>
+        <stop offset="42%" stop-color="#b8bec6"/>
+        <stop offset="100%" stop-color="#5e646d"/>
+      </linearGradient>
+      <linearGradient id="bodyG2" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#d5dae0"/>
+        <stop offset="100%" stop-color="#7a8088"/>
+      </linearGradient>
+      <linearGradient id="glassG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#23303f"/>
+        <stop offset="100%" stop-color="#0a1018"/>
+      </linearGradient>
+      <linearGradient id="carbonG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#22262c"/>
+        <stop offset="100%" stop-color="#0d0f12"/>
+      </linearGradient>
+      <radialGradient id="floorG" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0%" stop-color="rgba(255,255,255,0.05)"/>
+        <stop offset="60%" stop-color="rgba(255,255,255,0.02)"/>
+        <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+      </radialGradient>
+      <radialGradient id="shadowG" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0%" stop-color="rgba(0,0,0,0.55)"/>
+        <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+      </radialGradient>
+      <linearGradient id="discG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#4a4f57"/>
+        <stop offset="100%" stop-color="#23262b"/>
+      </linearGradient>
+    </defs>
+
+    <!-- floor wash -->
+    <ellipse cx="800" cy="720" rx="680" ry="60" fill="url(#floorG)"/>
+    <!-- ground line -->
+    <line x1="120" y1="660" x2="1480" y2="660" stroke="rgba(255,255,255,.04)" stroke-width="1"/>
+
+    <!-- contact shadow under car -->
+    <ellipse cx="800" cy="680" rx="520" ry="22" fill="url(#shadowG)"/>
+
+    <!-- far-side depth: subtle far wheels (3/4 hint) -->
+    <g opacity="0.55">
+      <circle cx="1098" cy="558" r="98" fill="#08090c"/>
+      <circle cx="458" cy="558" r="98" fill="#08090c"/>
+    </g>
+
+    <!-- INTERIOR (behind body cabin) -->
+    <g data-part="interior" onClick="{{ onPartClick }}" style="cursor:pointer" transform="{{ interiorT }}" opacity="{{ interiorO }}">
+      <!-- driver seat back -->
+      <path d="M 720 348 C 720 342 726 338 734 338 L 752 338 C 760 338 766 343 766 350 L 766 420 L 720 420 Z" fill="#16181b"/>
+      <!-- side bolsters -->
+      <rect x="720" y="348" width="6" height="72" rx="1" fill="#23262b"/>
+      <rect x="760" y="348" width="6" height="72" rx="1" fill="#23262b"/>
+      <!-- harness slots -->
+      <circle cx="733" cy="362" r="2.6" fill="#5a5f66"/>
+      <circle cx="751" cy="362" r="2.6" fill="#5a5f66"/>
+      <!-- seat base -->
+      <rect x="718" y="415" width="52" height="13" rx="3" fill="#16181b"/>
+      <!-- passenger seat (far side) -->
+      <path d="M 670 360 C 670 354 676 350 682 350 L 700 350 C 708 350 712 355 712 362 L 712 422 L 670 422 Z" fill="#0e1014" opacity="0.7"/>
+      <!-- roll cage main hoop -->
+      <path d="M 686 338 Q 740 318 776 338" stroke="#7a8088" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <!-- cage diagonal -->
+      <path d="M 696 348 L 716 372" stroke="#5a5f66" stroke-width="2" stroke-linecap="round"/>
+      <!-- steering wheel -->
+      <circle cx="800" cy="378" r="14" fill="none" stroke="#3a3f47" stroke-width="3"/>
+    </g>
+
+    <!-- ENGINE (behind body, rear-mounted) -->
+    <g data-part="engine" onClick="{{ onPartClick }}" style="cursor:pointer" transform="{{ engineT }}" opacity="{{ engineO }}">
+      <!-- engine block -->
+      <rect x="340" y="438" width="148" height="80" rx="5" fill="#3a3f47"/>
+      <!-- block shading -->
+      <rect x="340" y="495" width="148" height="23" rx="5" fill="#23262b"/>
+      <!-- valve cover left (rear bank) -->
+      <rect x="346" y="424" width="62" height="20" rx="3" fill="#6a707a"/>
+      <line x1="346" y1="434" x2="408" y2="434" stroke="#3a3f47" stroke-width="1"/>
+      <!-- valve cover right (front bank) -->
+      <rect x="420" y="424" width="62" height="20" rx="3" fill="#6a707a"/>
+      <line x1="420" y1="434" x2="482" y2="434" stroke="#3a3f47" stroke-width="1"/>
+      <!-- intake plenum -->
+      <rect x="384" y="414" width="40" height="14" rx="2" fill="#1a1c20"/>
+      <rect x="386" y="416" width="36" height="2" rx="1" fill="#3a3f47"/>
+      <!-- cylinder lines -->
+      <g stroke="#1a1c20" stroke-width="0.8" opacity="0.7">
+        <line x1="362" y1="438" x2="362" y2="518"/>
+        <line x1="386" y1="438" x2="386" y2="518"/>
+        <line x1="410" y1="438" x2="410" y2="518"/>
+        <line x1="434" y1="438" x2="434" y2="518"/>
+        <line x1="458" y1="438" x2="458" y2="518"/>
+      </g>
+      <!-- pulley wheel -->
+      <circle cx="496" cy="476" r="14" fill="#2a2d33" stroke="#7a8088" stroke-width="1.5"/>
+      <circle cx="496" cy="476" r="5" fill="#0a0c0f"/>
+      <!-- label dot -->
+      <circle cx="414" cy="404" r="3" fill="#d9b540"/>
+    </g>
+
+    <!-- EXHAUST (behind rear bumper, slides out backward) -->
+    <g data-part="exhaust" onClick="{{ onPartClick }}" style="cursor:pointer" transform="{{ exhaustT }}" opacity="{{ exhaustO }}">
+      <!-- collector / muffler box -->
+      <rect x="300" y="584" width="120" height="36" rx="6" fill="#2a2d33"/>
+      <rect x="300" y="584" width="120" height="10" rx="6" fill="#3a3f47"/>
+      <!-- header pipe (forward, into engine bay) -->
+      <path d="M 420 596 C 460 580 490 560 510 540" stroke="#3a3f47" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <path d="M 420 608 C 460 600 490 595 520 590" stroke="#2a2d33" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <!-- twin tailpipes (rear-exit) -->
+      <ellipse cx="293" cy="596" rx="14" ry="10" fill="#1a1c20"/>
+      <ellipse cx="293" cy="596" rx="10" ry="7" fill="#06080a"/>
+      <ellipse cx="293" cy="596" rx="8" ry="5.5" fill="none" stroke="#7a8088" stroke-width="0.6"/>
+      <ellipse cx="318" cy="608" rx="14" ry="10" fill="#1a1c20"/>
+      <ellipse cx="318" cy="608" rx="10" ry="7" fill="#06080a"/>
+      <ellipse cx="318" cy="608" rx="8" ry="5.5" fill="none" stroke="#7a8088" stroke-width="0.6"/>
+    </g>
+
+    <!-- BODY SHELL -->
+    <g opacity="{{ bodyO }}" style="transition:opacity .35s ease;">
+      <!-- main silhouette -->
+      <path d="
+        M 285 540
+        C 285 478, 295 450, 322 442
+        L 360 432
+        L 432 412
+        C 460 397, 488 380, 516 360
+        C 538 340, 552 320, 580 305
+        L 690 295
+        C 720 290, 742 288, 782 290
+        L 870 295
+        C 884 308, 900 328, 924 354
+        L 970 380
+        C 1010 386, 1042 392, 1080 400
+        L 1140 408
+        C 1170 408, 1192 412, 1212 422
+        C 1232 428, 1252 438, 1266 452
+        C 1276 462, 1280 478, 1280 492
+        L 1280 542
+        C 1280 576, 1276 590, 1264 596
+        L 1180 602
+        C 1170 512, 1130 452, 1080 452
+        C 1030 452, 990 512, 980 602
+        L 530 602
+        C 520 512, 490 452, 440 452
+        C 390 452, 360 512, 350 602
+        L 290 602
+        C 286 596, 282 576, 285 540 Z
+      " fill="url(#bodyG)"/>
+
+      <!-- subtle top-light highlight stripe along shoulder -->
+      <path d="
+        M 340 432 L 430 412
+        C 460 397, 488 380, 516 360
+        C 538 340, 552 320, 580 305
+        L 690 295
+        C 720 290, 742 288, 782 290
+        L 870 295
+        C 884 308, 900 328, 924 354
+        L 970 380
+        C 1010 386, 1042 392, 1080 400
+        L 1140 408
+        C 1170 408, 1192 412, 1212 422
+        C 1232 428, 1252 438, 1266 452
+      " stroke="rgba(255,255,255,0.35)" stroke-width="1.2" fill="none"/>
+
+      <!-- bottom shadow band on body -->
+      <path d="
+        M 290 580 L 350 595 L 530 595 L 555 575 L 980 575 L 1000 595 L 1180 595 L 1200 575 L 1270 575 L 1278 590 L 1264 596 L 290 602 Z
+      " fill="rgba(0,0,0,0.22)"/>
+
+      <!-- character line along door -->
+      <path d="M 540 502 C 700 498, 880 498, 970 506" stroke="rgba(0,0,0,0.18)" stroke-width="1" fill="none"/>
+
+      <!-- cabin glass -->
+      <path d="
+        M 580 305 L 690 295 L 782 290 L 870 295 L 924 354 L 555 354 Z
+      " fill="url(#glassG)"/>
+      <!-- glass top highlight -->
+      <path d="M 600 308 L 800 298" stroke="rgba(255,255,255,0.16)" stroke-width="1.2" stroke-linecap="round"/>
+
+      <!-- B-pillar / door frame line (between front and rear glass) -->
+      <line x1="730" y1="293" x2="715" y2="354" stroke="#1a1c20" stroke-width="2"/>
+
+      <!-- side intake (carbon, aft of door) -->
+      <path d="M 555 480 C 580 472, 612 470, 630 478 L 626 506 C 608 514, 580 514, 555 506 Z" fill="url(#carbonG)"/>
+      <!-- intake fin -->
+      <path d="M 580 484 L 614 484" stroke="#3a3f47" stroke-width="1.5"/>
+      <path d="M 580 496 L 614 496" stroke="#3a3f47" stroke-width="1.5"/>
+
+      <!-- headlight (round, signature) -->
+      <ellipse cx="1238" cy="450" rx="20" ry="13" fill="#e6e9ee"/>
+      <ellipse cx="1238" cy="450" rx="16" ry="10" fill="#23303f"/>
+      <ellipse cx="1238" cy="450" rx="10" ry="6" fill="#0a1018"/>
+      <ellipse cx="1234" cy="447" rx="3" ry="2" fill="#ffffff"/>
+
+      <!-- taillight strip -->
+      <path d="M 295 460 L 312 466 L 312 478 L 295 472 Z" fill="#5a1216" stroke="#ff2630" stroke-width="0.5"/>
+      <path d="M 312 466 L 326 470 L 326 482 L 312 478 Z" fill="#5a1216" stroke="#ff2630" stroke-width="0.5" opacity="0.7"/>
+
+      <!-- fender vent (front, behind front wheel arch) -->
+      <path d="M 1160 484 L 1196 488 L 1196 500 L 1160 496 Z" fill="url(#carbonG)"/>
+      <line x1="1166" y1="490" x2="1190" y2="492" stroke="#3a3f47" stroke-width="0.8"/>
+
+      <!-- door cut lines -->
+      <path d="M 720 298 L 700 354 L 700 600" stroke="rgba(0,0,0,0.28)" stroke-width="0.6" fill="none"/>
+      <path d="M 950 360 L 970 600" stroke="rgba(0,0,0,0.28)" stroke-width="0.6" fill="none"/>
+
+      <!-- front splitter (carbon shelf) -->
+      <path d="M 1208 595 L 1280 596 L 1300 614 L 1228 612 Z" fill="url(#carbonG)"/>
+      <path d="M 1208 595 L 1280 596" stroke="rgba(255,255,255,0.06)" stroke-width="0.6"/>
+
+      <!-- side mirror -->
+      <path d="M 906 322 C 916 320, 928 324, 932 336 L 916 340 C 908 336, 904 330, 906 322 Z" fill="url(#bodyG2)"/>
+
+      <!-- door handle (small recess) -->
+      <rect x="848" y="438" width="38" height="5" rx="2" fill="rgba(0,0,0,0.5)"/>
+    </g>
+
+    <!-- HOOD overlay -->
+    <g data-part="hood" onClick="{{ onPartClick }}" style="cursor:pointer" transform="{{ hoodT }}" opacity="{{ hoodO }}">
+      <path d="M 970 380 C 1010 386, 1042 392, 1080 400 L 1140 408 C 1170 408, 1192 412, 1212 422 L 1208 444 C 1188 432, 1162 426, 1138 424 L 1080 416 C 1040 408, 1010 402, 970 396 Z" fill="url(#bodyG2)" stroke="rgba(0,0,0,0.18)" stroke-width="0.4"/>
+      <!-- NACA-style central duct -->
+      <path d="M 1062 412 L 1118 416 L 1126 426 L 1070 422 Z" fill="#0d0f12"/>
+      <path d="M 1062 412 L 1070 422" stroke="#3a3f47" stroke-width="0.6"/>
+      <!-- hood shutline -->
+      <path d="M 980 386 C 1020 392, 1080 400, 1210 422" stroke="rgba(255,255,255,0.18)" stroke-width="0.5" fill="none"/>
+    </g>
+
+    <!-- DOOR overlay (driver) -->
+    <g data-part="door" onClick="{{ onPartClick }}" style="cursor:pointer" transform="{{ doorT }}" opacity="{{ doorO }}">
+      <!-- door panel -->
+      <path d="M 720 298 L 870 295 L 924 354 L 950 360 L 970 600 L 700 600 L 700 354 Z" fill="url(#bodyG)" stroke="rgba(0,0,0,0.18)" stroke-width="0.5"/>
+      <!-- door glass -->
+      <path d="M 720 302 L 870 299 L 916 354 L 730 354 Z" fill="url(#glassG)"/>
+      <!-- highlight on glass -->
+      <path d="M 740 312 L 850 308" stroke="rgba(255,255,255,0.18)" stroke-width="0.8" stroke-linecap="round"/>
+      <!-- B-pillar -->
+      <line x1="730" y1="298" x2="716" y2="354" stroke="#1a1c20" stroke-width="2"/>
+      <!-- character line -->
+      <path d="M 700 502 L 970 506" stroke="rgba(0,0,0,0.22)" stroke-width="1" fill="none"/>
+      <!-- door handle -->
+      <rect x="848" y="438" width="38" height="5" rx="2" fill="rgba(0,0,0,0.55)"/>
+      <!-- mirror -->
+      <path d="M 906 322 C 916 320, 928 324, 932 336 L 916 340 C 908 336, 904 330, 906 322 Z" fill="url(#bodyG2)"/>
+    </g>
+
+    <!-- WHEELS group -->
+    <g data-part="wheels" onClick="{{ onPartClick }}" style="cursor:pointer" opacity="{{ wheelsO }}">
+      <!-- FRONT WHEEL -->
+      <g transform="{{ wheelFT }}">
+        <!-- tire -->
+        <circle cx="1080" cy="560" r="102" fill="#0a0c0f"/>
+        <circle cx="1080" cy="560" r="99" fill="none" stroke="#1a1c20" stroke-width="2"/>
+        <!-- brake disc -->
+        <circle cx="1080" cy="560" r="68" fill="url(#discG)"/>
+        <circle cx="1080" cy="560" r="68" fill="none" stroke="#1a1c20" stroke-width="1"/>
+        <!-- drilled holes -->
+        <g fill="#0a0c0f">
+          <circle cx="1080" cy="500" r="2.5"/>
+          <circle cx="1112" cy="510" r="2.5"/>
+          <circle cx="1132" cy="540" r="2.5"/>
+          <circle cx="1132" cy="580" r="2.5"/>
+          <circle cx="1112" cy="610" r="2.5"/>
+          <circle cx="1080" cy="620" r="2.5"/>
+          <circle cx="1048" cy="610" r="2.5"/>
+          <circle cx="1028" cy="580" r="2.5"/>
+          <circle cx="1028" cy="540" r="2.5"/>
+          <circle cx="1048" cy="510" r="2.5"/>
+        </g>
+        <!-- yellow caliper (PCCB) -->
+        <path d="M 1112 520 C 1124 530, 1124 552, 1112 562 L 1100 552 C 1108 544, 1108 538, 1100 530 Z" fill="#d9b540"/>
+        <!-- wheel face / spokes -->
+        <circle cx="1080" cy="560" r="58" fill="#1a1c20"/>
+        <!-- 5 split spokes -->
+        <g stroke="#5a5f66" stroke-width="9" stroke-linecap="round">
+          <line x1="1080" y1="510" x2="1080" y2="610"/>
+          <line x1="1037" y1="535" x2="1123" y2="585"/>
+          <line x1="1037" y1="585" x2="1123" y2="535"/>
+          <line x1="1054" y1="514" x2="1106" y2="606"/>
+          <line x1="1054" y1="606" x2="1106" y2="514"/>
+        </g>
+        <!-- center-lock cap -->
+        <circle cx="1080" cy="560" r="13" fill="#23262b"/>
+        <circle cx="1080" cy="560" r="13" fill="none" stroke="#d9b540" stroke-width="1"/>
+        <path d="M 1075 560 L 1085 560 M 1080 555 L 1080 565" stroke="#d9b540" stroke-width="1.5"/>
+      </g>
+      <!-- REAR WHEEL -->
+      <g transform="{{ wheelRT }}">
+        <circle cx="440" cy="560" r="102" fill="#0a0c0f"/>
+        <circle cx="440" cy="560" r="99" fill="none" stroke="#1a1c20" stroke-width="2"/>
+        <circle cx="440" cy="560" r="68" fill="url(#discG)"/>
+        <circle cx="440" cy="560" r="68" fill="none" stroke="#1a1c20" stroke-width="1"/>
+        <g fill="#0a0c0f">
+          <circle cx="440" cy="500" r="2.5"/>
+          <circle cx="472" cy="510" r="2.5"/>
+          <circle cx="492" cy="540" r="2.5"/>
+          <circle cx="492" cy="580" r="2.5"/>
+          <circle cx="472" cy="610" r="2.5"/>
+          <circle cx="440" cy="620" r="2.5"/>
+          <circle cx="408" cy="610" r="2.5"/>
+          <circle cx="388" cy="580" r="2.5"/>
+          <circle cx="388" cy="540" r="2.5"/>
+          <circle cx="408" cy="510" r="2.5"/>
+        </g>
+        <path d="M 472 520 C 484 530, 484 552, 472 562 L 460 552 C 468 544, 468 538, 460 530 Z" fill="#d9b540"/>
+        <circle cx="440" cy="560" r="58" fill="#1a1c20"/>
+        <g stroke="#5a5f66" stroke-width="9" stroke-linecap="round">
+          <line x1="440" y1="510" x2="440" y2="610"/>
+          <line x1="397" y1="535" x2="483" y2="585"/>
+          <line x1="397" y1="585" x2="483" y2="535"/>
+          <line x1="414" y1="514" x2="466" y2="606"/>
+          <line x1="414" y1="606" x2="466" y2="514"/>
+        </g>
+        <circle cx="440" cy="560" r="13" fill="#23262b"/>
+        <circle cx="440" cy="560" r="13" fill="none" stroke="#d9b540" stroke-width="1"/>
+        <path d="M 435 560 L 445 560 M 440 555 L 440 565" stroke="#d9b540" stroke-width="1.5"/>
+      </g>
+    </g>
+
+    <!-- WING (swan-neck) -->
+    <g data-part="wing" onClick="{{ onPartClick }}" style="cursor:pointer" transform="{{ wingT }}" opacity="{{ wingO }}">
+      <!-- far-side swan strut (depth hint) -->
+      <path d="M 390 408 C 396 376, 416 348, 446 296 C 450 290, 458 290, 462 296 C 460 348, 432 376, 414 408 Z" fill="#0a0c0f" opacity="0.72"/>
+      <!-- near-side swan strut -->
+      <path d="M 366 410 C 372 378, 392 350, 422 298 C 426 292, 434 292, 438 298 C 436 350, 408 378, 390 410 Z" fill="url(#carbonG)"/>
+      <!-- strut highlight -->
+      <path d="M 374 408 C 380 378, 396 352, 422 304" stroke="rgba(255,255,255,0.12)" stroke-width="0.8" fill="none"/>
+      <!-- wing blade -->
+      <rect x="298" y="278" width="190" height="13" rx="3" fill="url(#carbonG)"/>
+      <!-- blade top edge -->
+      <rect x="298" y="278" width="190" height="3" rx="1" fill="rgba(255,255,255,0.18)"/>
+      <!-- blade bottom shadow -->
+      <rect x="298" y="288" width="190" height="3" rx="1" fill="rgba(0,0,0,0.5)"/>
+      <!-- endplate left -->
+      <path d="M 298 270 L 298 304 L 290 300 L 292 274 Z" fill="#0e1014"/>
+      <!-- endplate right -->
+      <path d="M 488 274 L 488 304 L 496 300 L 494 270 Z" fill="#0e1014"/>
+      <!-- Gurney flap on rear edge -->
+      <rect x="298" y="276" width="190" height="2" fill="#23262b"/>
+    </g>
+  </svg>
+
+  <!-- BOTTOM CONTROL BAR -->
+  <div style="position:absolute;left:0;right:0;bottom:0;padding:0 48px 32px;display:flex;flex-direction:column;align-items:center;gap:22px;z-index:5;pointer-events:none;">
+
+    <!-- chips -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;pointer-events:auto;">
+      <button onClick="{{ onSelectWing }}" class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipWingStyle }}">Rear wing</button>
+      <button onClick="{{ onSelectHood }}" class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipHoodStyle }}">Hood</button>
+      <button onClick="{{ onSelectDoor }}" class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipDoorStyle }}">Door</button>
+      <button onClick="{{ onSelectWheels }}" class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipWheelsStyle }}">Wheels &amp; brakes</button>
+      <button onClick="{{ onSelectEngine }}" class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipEngineStyle }}">Engine</button>
+      <button onClick="{{ onSelectExhaust }}" class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipExhaustStyle }}">Exhaust</button>
+      <button onClick="{{ onSelectInterior }}" class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipInteriorStyle }}">Interior</button>
+    </div>
+
+    <!-- explode slider -->
+    <div style="display:flex;align-items:center;gap:20px;pointer-events:auto;background:rgba(10,13,17,.62);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:14px 22px;min-width:540px;">
+      <span style="font:500 10px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:#7a8290;width:80px;">Assembled</span>
+      <input type="range" min="0" max="100" value="0" onInput="{{ onSlider }}" class="gtrs-range" style="flex:1;min-width:280px;" />
+      <span style="font:500 10px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:#7a8290;width:80px;text-align:right;">Exploded</span>
+      <span style="font:600 13px 'JetBrains Mono';color:#d9b540;width:42px;text-align:right;">{{ pct }}%</span>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { explode: 0, selected: null };
+    this.onPartClick = this.onPartClick.bind(this);
+    this.onSlider = this.onSlider.bind(this);
+  }
+
+  onPartClick(e) {
+    const p = e.currentTarget.getAttribute('data-part');
+    this.setState(s => ({ selected: s.selected === p ? null : p }));
+  }
+  onSlider(e) {
+    const v = +e.target.value / 100;
+    this.setState({ explode: v, selected: null });
+  }
+  selectPart(p) {
+    this.setState(s => ({ selected: s.selected === p ? null : p }));
+  }
+  reset() { this.setState({ selected: null }); }
+
+  partInfo() {
+    return {
+      wing:     { name: 'Swan-neck rear wing',  desc: 'Top-mount struts keep the wing\u2019s high-pressure underside clean, generating significantly more downforce than a conventional bottom-mount design.' },
+      hood:     { name: 'Hood & frunk',          desc: 'Carbon-composite hood with a central NACA duct feeding the front radiators. A small luggage compartment sits below.' },
+      door:     { name: 'Driver\u2019s door',    desc: 'Lightweight aluminium door with a magnesium frame and thinner side glazing \u2014 a few kilos lighter than the standard 911 door.' },
+      wheels:   { name: 'Wheels & brakes',       desc: 'Forged center-lock wheels on carbon-ceramic discs (PCCB) with yellow calipers. Drilled discs vent heat and shed water on the road.' },
+      engine:   { name: 'Flat-six engine',       desc: '4.0 L naturally aspirated, mounted behind the rear axle. ~525 hp, a 9000 rpm redline, and dry-sump lubrication for sustained track loads.' },
+      exhaust:  { name: 'Exhaust system',        desc: 'Lightweight titanium exhaust with center-exit tailpipes \u2014 less mass, freer flow, and the trademark flat-six bark.' },
+      interior: { name: 'Interior & roll cage',  desc: 'Carbon bucket seats, six-point harnesses, and a bolt-in roll cage. The cabin is stripped of anything that doesn\u2019t make the car faster.' },
+    };
+  }
+
+  renderVals() {
+    const m = this.state.explode;
+    const sel = this.state.selected;
+
+    const t = (key, dx, dy) => {
+      let a;
+      if (sel === null) a = m;
+      else if (sel === key) a = 1;
+      else a = 0;
+      return 'translate(' + (dx * a).toFixed(1) + ' ' + (dy * a).toFixed(1) + ')';
+    };
+    const op = (key) => (sel && sel !== key) ? 0.3 : 1;
+    const bodyOp = sel ? (sel === 'engine' || sel === 'interior' || sel === 'exhaust' ? 0.35 : 0.55) : 1;
+
+    const info = this.partInfo();
+    const cur = sel ? info[sel] : null;
+
+    const chip = (key) => sel === key
+      ? 'background-color:#d9b540;color:#1a1408;border-color:#d9b540;'
+      : 'background-color:rgba(255,255,255,0.035);color:#cdd2d8;border-color:rgba(255,255,255,0.1);';
+
+    return {
+      wingT:     t('wing',     0,   -210),
+      hoodT:     t('hood',     200, -90),
+      doorT:     t('door',     40,  220),
+      wheelFT:   t('wheels',   150, 95),
+      wheelRT:   t('wheels',  -150, 95),
+      engineT:   t('engine',  -200, 170),
+      exhaustT:  t('exhaust', -240, 30),
+      interiorT: t('interior', -30, -270),
+
+      wingO: op('wing'), hoodO: op('hood'), doorO: op('door'),
+      wheelsO: op('wheels'), engineO: op('engine'), exhaustO: op('exhaust'), interiorO: op('interior'),
+      bodyO: bodyOp,
+
+      pct: Math.round(m * 100),
+      hasSel: !!cur, noSel: !cur,
+      selName: cur ? cur.name : '',
+      selDesc: cur ? cur.desc : '',
+
+      onPartClick: this.onPartClick,
+      onSlider: this.onSlider,
+      onSelectWing:     () => this.selectPart('wing'),
+      onSelectHood:     () => this.selectPart('hood'),
+      onSelectDoor:     () => this.selectPart('door'),
+      onSelectWheels:   () => this.selectPart('wheels'),
+      onSelectEngine:   () => this.selectPart('engine'),
+      onSelectExhaust:  () => this.selectPart('exhaust'),
+      onSelectInterior: () => this.selectPart('interior'),
+      onReset:          () => this.reset(),
+
+      chipWingStyle:     chip('wing'),
+      chipHoodStyle:     chip('hood'),
+      chipDoorStyle:     chip('door'),
+      chipWheelsStyle:   chip('wheels'),
+      chipEngineStyle:   chip('engine'),
+      chipExhaustStyle:  chip('exhaust'),
+      chipInteriorStyle: chip('interior'),
+    };
+  }
+}
+</script>
+</body>
+</html>

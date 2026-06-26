@@ -1,0 +1,572 @@
+[
+ {
+  "name": "brakedisc_FR.004",
+  "file": "gt3rs/parts/brakedisc_FR.004.glb",
+  "tris": 5244
+ },
+ {
+  "name": "Object_4.004",
+  "file": "gt3rs/parts/Object_4.004.glb",
+  "tris": 12588
+ },
+ {
+  "name": "wheel.003",
+  "file": "gt3rs/parts/wheel.003.glb",
+  "tris": 9546
+ },
+ {
+  "name": "brakedisc_FR.002",
+  "file": "gt3rs/parts/brakedisc_FR.002.glb",
+  "tris": 5244
+ },
+ {
+  "name": "Object_4.002",
+  "file": "gt3rs/parts/Object_4.002.glb",
+  "tris": 12588
+ },
+ {
+  "name": "wheel.002",
+  "file": "gt3rs/parts/wheel.002.glb",
+  "tris": 9546
+ },
+ {
+  "name": "brakedisc_FR.001",
+  "file": "gt3rs/parts/brakedisc_FR.001.glb",
+  "tris": 5244
+ },
+ {
+  "name": "Object_4.001",
+  "file": "gt3rs/parts/Object_4.001.glb",
+  "tris": 12588
+ },
+ {
+  "name": "wheel.001",
+  "file": "gt3rs/parts/wheel.001.glb",
+  "tris": 9546
+ },
+ {
+  "name": "brakedisc_FR.003",
+  "file": "gt3rs/parts/brakedisc_FR.003.glb",
+  "tris": 5244
+ },
+ {
+  "name": "Object_4.003",
+  "file": "gt3rs/parts/Object_4.003.glb",
+  "tris": 12588
+ },
+ {
+  "name": "body.005",
+  "file": "gt3rs/parts/body.005.glb",
+  "tris": 568
+ },
+ {
+  "name": "windshield",
+  "file": "gt3rs/parts/windshield.glb",
+  "tris": 954
+ },
+ {
+  "name": "shifter_knob_M",
+  "file": "gt3rs/parts/shifter_knob_M.glb",
+  "tris": 1072
+ },
+ {
+  "name": "shifter_boot_M",
+  "file": "gt3rs/parts/shifter_boot_M.glb",
+  "tris": 134
+ },
+ {
+  "name": "shifter_base_M",
+  "file": "gt3rs/parts/shifter_base_M.glb",
+  "tris": 558
+ },
+ {
+  "name": "shifter_A",
+  "file": "gt3rs/parts/shifter_A.glb",
+  "tris": 1042
+ },
+ {
+  "name": "seats_R",
+  "file": "gt3rs/parts/seats_R.glb",
+  "tris": 1762
+ },
+ {
+  "name": "seat_FR",
+  "file": "gt3rs/parts/seat_FR.glb",
+  "tris": 3853
+ },
+ {
+  "name": "seat_FL",
+  "file": "gt3rs/parts/seat_FL.glb",
+  "tris": 3853
+ },
+ {
+  "name": "quarterglass_R_tint",
+  "file": "gt3rs/parts/quarterglass_R_tint.glb",
+  "tris": 522
+ },
+ {
+  "name": "quarterglass_L",
+  "file": "gt3rs/parts/quarterglass_L.glb",
+  "tris": 528
+ },
+ {
+  "name": "mirror_R",
+  "file": "gt3rs/parts/mirror_R.glb",
+  "tris": 3082
+ },
+ {
+  "name": "mirror_L",
+  "file": "gt3rs/parts/mirror_L.glb",
+  "tris": 3082
+ },
+ {
+  "name": "headlightglass_R_led",
+  "file": "gt3rs/parts/headlightglass_R_led.glb",
+  "tris": 372
+ },
+ {
+  "name": "headlightglass_L_led",
+  "file": "gt3rs/parts/headlightglass_L_led.glb",
+  "tris": 372
+ },
+ {
+  "name": "headlight_R_led",
+  "file": "gt3rs/parts/headlight_R_led.glb",
+  "tris": 6961
+ },
+ {
+  "name": "headlight_L_led",
+  "file": "gt3rs/parts/headlight_L_led.glb",
+  "tris": 6961
+ },
+ {
+  "name": "gauges_screen",
+  "file": "gt3rs/parts/gauges_screen.glb",
+  "tris": 8
+ },
+ {
+  "name": "fascia_mid",
+  "file": "gt3rs/parts/fascia_mid.glb",
+  "tris": 3122
+ },
+ {
+  "name": "fascia_glass",
+  "file": "gt3rs/parts/fascia_glass.glb",
+  "tris": 4226
+ },
+ {
+  "name": "doorpanel_R_antichrome",
+  "file": "gt3rs/parts/doorpanel_R_antichrome.glb",
+  "tris": 2816
+ },
+ {
+  "name": "doorpanel_L_antichrome",
+  "file": "gt3rs/parts/doorpanel_L_antichrome.glb",
+  "tris": 2962
+ },
+ {
+  "name": "doorglass_R_tint",
+  "file": "gt3rs/parts/doorglass_R_tint.glb",
+  "tris": 754
+ },
+ {
+  "name": "doorglass_L_tint",
+  "file": "gt3rs/parts/doorglass_L_tint.glb",
+  "tris": 762
+ },
+ {
+  "name": "door_R_chrome_end",
+  "file": "gt3rs/parts/door_R_chrome_end.glb",
+  "tris": 248
+ },
+ {
+  "name": "door_R_antichrome_end",
+  "file": "gt3rs/parts/door_R_antichrome_end.glb",
+  "tris": 248
+ },
+ {
+  "name": "door_L_chrome_end",
+  "file": "gt3rs/parts/door_L_chrome_end.glb",
+  "tris": 248
+ },
+ {
+  "name": "door_L_antichrome_end",
+  "file": "gt3rs/parts/door_L_antichrome_end.glb",
+  "tris": 248
+ },
+ {
+  "name": "dash_noclock",
+  "file": "gt3rs/parts/dash_noclock.glb",
+  "tris": 482
+ },
+ {
+  "name": "dash_clock",
+  "file": "gt3rs/parts/dash_clock.glb",
+  "tris": 16152
+ },
+ {
+  "name": "dash_9000",
+  "file": "gt3rs/parts/dash_9000.glb",
+  "tris": 14901
+ },
+ {
+  "name": "chrome_dash_accessories",
+  "file": "gt3rs/parts/chrome_dash_accessories.glb",
+  "tris": 480
+ },
+ {
+  "name": "body_chrome_end",
+  "file": "gt3rs/parts/body_chrome_end.glb",
+  "tris": 2408
+ },
+ {
+  "name": "body.002",
+  "file": "gt3rs/parts/body.002.glb",
+  "tris": 10918
+ },
+ {
+  "name": "black_dash_accessories",
+  "file": "gt3rs/parts/black_dash_accessories.glb",
+  "tris": 480
+ },
+ {
+  "name": "backlight_tint",
+  "file": "gt3rs/parts/backlight_tint.glb",
+  "tris": 2044
+ },
+ {
+  "name": "steer_3",
+  "file": "gt3rs/parts/steer_3.glb",
+  "tris": 9807
+ },
+ {
+  "name": "signalstalk",
+  "file": "gt3rs/parts/signalstalk.glb",
+  "tris": 316
+ },
+ {
+  "name": "brakepedal",
+  "file": "gt3rs/parts/brakepedal.glb",
+  "tris": 116
+ },
+ {
+  "name": "gaspedal",
+  "file": "gt3rs/parts/gaspedal.glb",
+  "tris": 68
+ },
+ {
+  "name": "clutchpedal",
+  "file": "gt3rs/parts/clutchpedal.glb",
+  "tris": 116
+ },
+ {
+  "name": "needle_tacho_9000",
+  "file": "gt3rs/parts/needle_tacho_9000.glb",
+  "tris": 66
+ },
+ {
+  "name": "radiators_small",
+  "file": "gt3rs/parts/radiators_small.glb",
+  "tris": 76
+ },
+ {
+  "name": "exhausttip_3_chrome",
+  "file": "gt3rs/parts/exhausttip_3_chrome.glb",
+  "tris": 3386
+ },
+ {
+  "name": "engine",
+  "file": "gt3rs/parts/engine.glb",
+  "tris": 3832
+ },
+ {
+  "name": "exhaust",
+  "file": "gt3rs/parts/exhaust.glb",
+  "tris": 1500
+ },
+ {
+  "name": "exhaust_TT",
+  "file": "gt3rs/parts/exhaust_TT.glb",
+  "tris": 3540
+ },
+ {
+  "name": "muffler",
+  "file": "gt3rs/parts/muffler.glb",
+  "tris": 348
+ },
+ {
+  "name": "brakelines",
+  "file": "gt3rs/parts/brakelines.glb",
+  "tris": 1088
+ },
+ {
+  "name": "bumperbar_F",
+  "file": "gt3rs/parts/bumperbar_F.glb",
+  "tris": 68
+ },
+ {
+  "name": "bumperbar_R",
+  "file": "gt3rs/parts/bumperbar_R.glb",
+  "tris": 84
+ },
+ {
+  "name": "coilover_F",
+  "file": "gt3rs/parts/coilover_F.glb",
+  "tris": 1848
+ },
+ {
+  "name": "coilover_RL",
+  "file": "gt3rs/parts/coilover_RL.glb",
+  "tris": 902
+ },
+ {
+  "name": "coilover_RR",
+  "file": "gt3rs/parts/coilover_RR.glb",
+  "tris": 902
+ },
+ {
+  "name": "coolantlines",
+  "file": "gt3rs/parts/coolantlines.glb",
+  "tris": 476
+ },
+ {
+  "name": "diff_F",
+  "file": "gt3rs/parts/diff_F.glb",
+  "tris": 206
+ },
+ {
+  "name": "driveshaft",
+  "file": "gt3rs/parts/driveshaft.glb",
+  "tris": 168
+ },
+ {
+  "name": "fuellines",
+  "file": "gt3rs/parts/fuellines.glb",
+  "tris": 460
+ },
+ {
+  "name": "fueltank",
+  "file": "gt3rs/parts/fueltank.glb",
+  "tris": 116
+ },
+ {
+  "name": "halfshaft_e_F",
+  "file": "gt3rs/parts/halfshaft_e_F.glb",
+  "tris": 528
+ },
+ {
+  "name": "halfshaft_e_R",
+  "file": "gt3rs/parts/halfshaft_e_R.glb",
+  "tris": 528
+ },
+ {
+  "name": "halfshaft_F",
+  "file": "gt3rs/parts/halfshaft_F.glb",
+  "tris": 528
+ },
+ {
+  "name": "halfshaft_R",
+  "file": "gt3rs/parts/halfshaft_R.glb",
+  "tris": 528
+ },
+ {
+  "name": "heatshield",
+  "file": "gt3rs/parts/heatshield.glb",
+  "tris": 264
+ },
+ {
+  "name": "hub_F",
+  "file": "gt3rs/parts/hub_F.glb",
+  "tris": 408
+ },
+ {
+  "name": "hub_R",
+  "file": "gt3rs/parts/hub_R.glb",
+  "tris": 424
+ },
+ {
+  "name": "intake_TT",
+  "file": "gt3rs/parts/intake_TT.glb",
+  "tris": 308
+ },
+ {
+  "name": "lowerarm_F",
+  "file": "gt3rs/parts/lowerarm_F.glb",
+  "tris": 336
+ },
+ {
+  "name": "lowerarm_R",
+  "file": "gt3rs/parts/lowerarm_R.glb",
+  "tris": 388
+ },
+ {
+  "name": "muffler_custom",
+  "file": "gt3rs/parts/muffler_custom.glb",
+  "tris": 280
+ },
+ {
+  "name": "pushrod_R",
+  "file": "gt3rs/parts/pushrod_R.glb",
+  "tris": 144
+ },
+ {
+  "name": "pushrod_triangle_R",
+  "file": "gt3rs/parts/pushrod_triangle_R.glb",
+  "tris": 372
+ },
+ {
+  "name": "radiator",
+  "file": "gt3rs/parts/radiator.glb",
+  "tris": 142
+ },
+ {
+  "name": "steeringbox",
+  "file": "gt3rs/parts/steeringbox.glb",
+  "tris": 312
+ },
+ {
+  "name": "subframe_F",
+  "file": "gt3rs/parts/subframe_F.glb",
+  "tris": 840
+ },
+ {
+  "name": "subframe_R",
+  "file": "gt3rs/parts/subframe_R.glb",
+  "tris": 876
+ },
+ {
+  "name": "swaybar_F",
+  "file": "gt3rs/parts/swaybar_F.glb",
+  "tris": 288
+ },
+ {
+  "name": "swaybar_R",
+  "file": "gt3rs/parts/swaybar_R.glb",
+  "tris": 384
+ },
+ {
+  "name": "tierod_F",
+  "file": "gt3rs/parts/tierod_F.glb",
+  "tris": 128
+ },
+ {
+  "name": "trailingarm_R",
+  "file": "gt3rs/parts/trailingarm_R.glb",
+  "tris": 152
+ },
+ {
+  "name": "transaxle",
+  "file": "gt3rs/parts/transaxle.glb",
+  "tris": 162
+ },
+ {
+  "name": "upperarm_F",
+  "file": "gt3rs/parts/upperarm_F.glb",
+  "tris": 232
+ },
+ {
+  "name": "upperarm_R",
+  "file": "gt3rs/parts/upperarm_R.glb",
+  "tris": 192
+ },
+ {
+  "name": "needle_tacho",
+  "file": "gt3rs/parts/needle_tacho.glb",
+  "tris": 66
+ },
+ {
+  "name": "exhausttip_3_antichrome",
+  "file": "gt3rs/parts/exhausttip_3_antichrome.glb",
+  "tris": 3386
+ },
+ {
+  "name": "underbody_gt3rs",
+  "file": "gt3rs/parts/underbody_gt3rs.glb",
+  "tris": 2826
+ },
+ {
+  "name": "wheel",
+  "file": "gt3rs/parts/wheel.glb",
+  "tris": 9546
+ },
+ {
+  "name": "fender_R",
+  "file": "gt3rs/parts/fender_R.glb",
+  "tris": 4175
+ },
+ {
+  "name": "right_leg",
+  "file": "gt3rs/parts/right_leg.glb",
+  "tris": 3364
+ },
+ {
+  "name": "body_gt3rs",
+  "file": "gt3rs/parts/body_gt3rs.glb",
+  "tris": 42462
+ },
+ {
+  "name": "door_R",
+  "file": "gt3rs/parts/door_R.glb",
+  "tris": 4544
+ },
+ {
+  "name": "door_L",
+  "file": "gt3rs/parts/door_L.glb",
+  "tris": 4386
+ },
+ {
+  "name": "fender_L",
+  "file": "gt3rs/parts/fender_L.glb",
+  "tris": 4007
+ },
+ {
+  "name": "spoiler",
+  "file": "gt3rs/parts/spoiler.glb",
+  "tris": 1486
+ },
+ {
+  "name": "bumper_F",
+  "file": "gt3rs/parts/bumper_F.glb",
+  "tris": 14268
+ },
+ {
+  "name": "bumper_R",
+  "file": "gt3rs/parts/bumper_R.glb",
+  "tris": 16476
+ },
+ {
+  "name": "left_leg",
+  "file": "gt3rs/parts/left_leg.glb",
+  "tris": 3310
+ },
+ {
+  "name": "tailgate",
+  "file": "gt3rs/parts/tailgate.glb",
+  "tris": 5472
+ },
+ {
+  "name": "sideskirts_R",
+  "file": "gt3rs/parts/sideskirts_R.glb",
+  "tris": 1799
+ },
+ {
+  "name": "sideskirts_L",
+  "file": "gt3rs/parts/sideskirts_L.glb",
+  "tris": 1799
+ },
+ {
+  "name": "carbon_hood",
+  "file": "gt3rs/parts/carbon_hood.glb",
+  "tris": 3558
+ },
+ {
+  "name": "carbon_roof",
+  "file": "gt3rs/parts/carbon_roof.glb",
+  "tris": 1568
+ },
+ {
+  "name": "carbon_Wing",
+  "file": "gt3rs/parts/carbon_Wing.glb",
+  "tris": 2920
+ }
+]

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engine — High-Detail Viewer</title>
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+<style>
+  :root{--bg:#0e0f12;--card:#16181d;--line:#2a2d34;--txt:#e7e9ee;--muted:#9aa0ab;--accent:#e10600;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  header{padding:22px 28px 14px;border-bottom:1px solid var(--line)}
+  header h1{margin:0;font-size:19px}
+  header p{margin:6px 0 0;color:var(--muted);font-size:13px;max-width:760px}
+  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;padding:20px 28px 40px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+  .card h2{margin:0;padding:14px 16px 2px;font-size:15px}
+  .card .meta{padding:0 16px 10px;color:var(--muted);font-size:12px}
+  model-viewer{width:100%;height:460px;background:
+     radial-gradient(circle at 50% 30%,#2c3038,#0c0d10 70%);--poster-color:transparent}
+  .controls{padding:10px 16px 16px;display:flex;gap:8px;flex-wrap:wrap}
+  .controls button{background:#1f2228;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer}
+</style>
+</head>
+<body>
+<header>
+  <h1>Engine — High-Detail Interactive Viewer</h1>
+  <p>Real geometry with original materials, studio lighting. Drag to orbit, scroll to zoom, double-click to focus. The GT3 RS engine is the most detailed (3,832 triangles / 407 solids); the Tourbillon engine is lower-poly (1,574). Needs an internet connection for the viewer library.</p>
+</header>
+<div class="row" id="row"></div>
+<script>
+const engines=[
+ {name:"Porsche 911 GT3 RS — Engine", meta:"3,832 triangles · 407 connected solids · flat-six block with intake plenum & runners", src:"models/gt3rs_engine.glb"},
+ {name:"Bugatti Tourbillon — Engine", meta:"1,574 triangles · engine-bay surfaces / intake covers (low-poly as modeled)", src:"models/tourbillon_engine.glb"}
+];
+const row=document.getElementById('row');
+engines.forEach((e,i)=>{
+  const id="mv"+i;
+  row.insertAdjacentHTML('beforeend',`
+   <div class="card">
+     <h2>${e.name}</h2><div class="meta">${e.meta}</div>
+     <model-viewer id="${id}" src="${e.src}" camera-controls touch-action="pan-y"
+        auto-rotate rotation-per-second="22deg" exposure="1.25" shadow-intensity="1" shadow-softness="0.8"
+        environment-image="neutral" tone-mapping="aces" interaction-prompt="none" min-field-of-view="5deg"></model-viewer>
+     <div class="controls">
+       <button onclick="document.getElementById('${id}').autoRotate=!document.getElementById('${id}').autoRotate">Toggle spin</button>
+       <button onclick="document.getElementById('${id}').resetTurntableRotation();document.getElementById('${id}').jumpCameraToGoal()">Reset view</button>
+     </div>
+   </div>`);
+});
+</script>
+</body>
+</html>

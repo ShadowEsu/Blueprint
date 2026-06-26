@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./asset-config.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #06080b; overflow-x: hidden; }
+  .gcard { transition: transform .35s cubic-bezier(.2,.7,.2,1), border-color .25s; }
+  .gcard:hover { transform: translateY(-4px); }
+  .gcard:hover .arrow { transform: translateX(4px); }
+  .arrow { transition: transform .25s; display:inline-block; }
+  .wind { transition: background .25s, transform .25s; }
+  .wind:hover { background:#d9b540 !important; color:#0a0d11 !important; transform: translateY(-2px); }
+  .wind:hover .warrow { transform: translateX(4px); }
+  .warrow { transition: transform .25s; display:inline-block; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:radial-gradient(150% 90% at 50% 20%, #14171d 0%, #0a0d11 55%, #04060a 100%);font-family:Manrope,sans-serif;color:#e6e9ee;padding:64px 72px 80px;box-sizing:border-box;">
+
+  <!-- HEADER -->
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:64px;gap:24px;flex-wrap:wrap;">
+    <div>
+      <div style="font:500 11px 'JetBrains Mono';letter-spacing:.32em;text-transform:uppercase;color:#d9b540;margin-bottom:14px;">Collection &middot; 4 vehicles</div>
+      <div style="font:300 84px/.95 Manrope;letter-spacing:-.04em;color:#f3f5f8;">Garage</div>
+      <div style="font:400 14px/1.5 Manrope;color:#7a8290;margin-top:14px;max-width:480px;">Select a vehicle to tear it down piece by piece, or run any of them through the wind tunnel to inspect aerodynamics.</div>
+    </div>
+
+    <a href="./Wind%20Tunnel.html" class="wind" style="display:inline-flex;align-items:center;gap:12px;background:rgba(217,181,64,.08);border:1px solid rgba(217,181,64,.5);color:#d9b540;text-decoration:none;padding:18px 28px;border-radius:999px;font:600 13.5px/1 Manrope;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 8h12a3 3 0 1 0-2.83-4"/><path d="M3 14h16a3 3 0 1 1-2.83 4"/><path d="M3 11h9"/></svg>
+      Wind Tunnel
+      <span class="warrow">&rarr;</span>
+    </a>
+  </div>
+
+  <!-- CAR GRID -->
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:22px;max-width:1200px;">
+    <sc-for list="{{ cars }}" as="c" hint-placeholder-count="4">
+      <a href="{{ c.link }}" class="gcard" style="position:relative;display:block;background:linear-gradient(180deg, rgba(20,24,30,.95), rgba(10,13,17,.95));border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:34px 34px 28px;text-decoration:none;color:inherit;overflow:hidden;min-height:280px;">
+
+        <!-- accent stripe -->
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:{{ c.color }};"></div>
+
+        <!-- maker monogram watermark -->
+        <div style="position:absolute;right:30px;top:30px;font:800 70px/1 Manrope;letter-spacing:-.04em;color:{{ c.color }};opacity:.07;text-transform:uppercase;pointer-events:none;">{{ c.mono }}</div>
+
+        <!-- maker + series -->
+        <div style="font:500 10.5px 'JetBrains Mono';letter-spacing:.28em;text-transform:uppercase;color:#9aa0ab;margin-bottom:14px;">{{ c.maker }} &nbsp;&middot;&nbsp; {{ c.series }}</div>
+
+        <!-- model name -->
+        <div style="font:700 36px/1.05 Manrope;letter-spacing:-.018em;color:#f3f5f8;margin-bottom:10px;">{{ c.name }}</div>
+
+        <!-- tag -->
+        <div style="font:400 13px/1.4 Manrope;color:#a3acb6;margin-bottom:48px;">{{ c.tag }}</div>
+
+        <!-- stats row -->
+        <div style="display:flex;gap:32px;margin-bottom:32px;">
+          <div>
+            <div style="font:500 9.5px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:#6a6e76;margin-bottom:6px;">Power</div>
+            <div style="font:600 18px Manrope;color:#e6e9ee;letter-spacing:-.01em;">{{ c.power }}</div>
+          </div>
+          <div>
+            <div style="font:500 9.5px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:#6a6e76;margin-bottom:6px;">Top speed</div>
+            <div style="font:600 18px Manrope;color:#e6e9ee;letter-spacing:-.01em;">{{ c.top }}</div>
+          </div>
+          <div>
+            <div style="font:500 9.5px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:#6a6e76;margin-bottom:6px;">Weight</div>
+            <div style="font:600 18px Manrope;color:#e6e9ee;letter-spacing:-.01em;">{{ c.weight }}</div>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div style="position:absolute;bottom:28px;left:34px;right:34px;display:flex;align-items:center;justify-content:space-between;">
+          <span style="font:500 11px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:{{ c.color }};">Explore</span>
+          <span class="arrow" style="font-size:18px;color:{{ c.color }};">&rarr;</span>
+        </div>
+
+      </a>
+    </sc-for>
+  </div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      cars: [
+        { link: './Car%20Anatomy%20Explorer.dc.html?car=0', color: '#FCBC00', mono: 'P', maker: 'Porsche', series: '992.2', name: '911 GT3 RS', tag: 'Track-focused naturally aspirated flagship.', power: '525 hp', top: '296 km/h', weight: '1450 kg' },
+        { link: './Car%20Anatomy%20Explorer.dc.html?car=1', color: '#E0162B', mono: 'F', maker: 'Ferrari',  series: 'F150',   name: 'LaFerrari', tag: 'V12 hybrid hypercar, F1-derived chassis.', power: '950 hp', top: '350 km/h', weight: '1255 kg' },
+        { link: './Car%20Anatomy%20Explorer.dc.html?car=2', color: '#6A8FA9', mono: 'P', maker: 'Porsche',  series: '991',    name: '911 Turbo', tag: 'Twin-turbo flat-six, daily-driver hypercar.', power: '520 hp', top: '320 km/h', weight: '1595 kg' },
+        { link: './Car%20Anatomy%20Explorer.dc.html?car=3', color: '#E47C0E', mono: 'L', maker: 'Lamborghini', series: 'LB834', name: 'Aventador SVJ', tag: 'Naturally aspirated V12, active aero.', power: '770 hp', top: '351 km/h', weight: '1525 kg' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

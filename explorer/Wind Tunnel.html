@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wind Tunnel</title>
+<script src="./asset-config.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#04060a; --panel:rgba(15,17,22,.85); --line:rgba(255,255,255,.08); --line-strong:rgba(255,255,255,.14); --txt:#eef0f4; --muted:#9aa0ab; --accent:#d9b540; }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--txt);font-family:Manrope,system-ui,sans-serif;overflow:hidden}
+  #stage{position:fixed;inset:0}
+  canvas{display:block}
+
+  /* Back to garage */
+  #back{position:absolute;top:30px;left:34px;z-index:30;display:flex;align-items:center;gap:7px;padding:8px 14px 8px 11px;border-radius:999px;background:var(--panel);border:1px solid var(--line-strong);color:var(--txt);text-decoration:none;font:500 11.5px/1 Manrope;letter-spacing:.04em;backdrop-filter:blur(10px);transition:border-color .25s;}
+  #back:hover{border-color:var(--accent)}
+  #back .arrow{font-size:16px;line-height:0;margin-top:-1px}
+
+  /* Heading */
+  #title{position:absolute;top:30px;left:50%;transform:translateX(-50%);z-index:20;text-align:center;pointer-events:none;}
+  #title .eyebrow{font:500 10.5px 'JetBrains Mono';letter-spacing:.32em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+  #title .main{font:600 14px Manrope;letter-spacing:.04em;color:var(--txt);}
+
+  /* Car picker (bottom) */
+  #picker{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:10px;padding:8px;background:var(--panel);border:1px solid var(--line-strong);border-radius:999px;backdrop-filter:blur(10px);}
+  .pchip{cursor:pointer;background:transparent;border:1px solid transparent;color:var(--muted);padding:9px 18px;border-radius:999px;font:500 11.5px Manrope;letter-spacing:.04em;display:flex;align-items:center;gap:8px;white-space:nowrap;transition:background .2s,color .2s,border-color .2s;}
+  .pchip:hover{color:var(--txt);background:rgba(255,255,255,.04)}
+  .pchip.active{background:rgba(217,181,64,.12);border-color:rgba(217,181,64,.5);color:var(--accent)}
+  .pchip .swatch{width:8px;height:8px;border-radius:50%;background:#888;}
+
+  /* Stats panel (top right) */
+  #stats{position:absolute;top:30px;right:34px;z-index:20;width:260px;background:var(--panel);border:1px solid var(--line-strong);border-radius:14px;padding:18px 20px;backdrop-filter:blur(10px);}
+  #stats .name{font:600 16px Manrope;letter-spacing:-.012em;color:var(--txt);margin-bottom:2px;}
+  #stats .sub{font:400 10.5px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:18px;}
+  #stats .row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-top:1px solid var(--line);}
+  #stats .row:first-of-type{border-top:none}
+  #stats .row .k{font:500 10.5px 'JetBrains Mono';letter-spacing:.18em;text-transform:uppercase;color:var(--muted);}
+  #stats .row .v{font:600 14.5px Manrope;color:var(--txt);letter-spacing:-.01em;}
+  #stats .note{font:400 10.5px/1.45 Manrope;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--line);}
+
+  /* Wind speed slider (bottom left) */
+  #wind{position:absolute;bottom:30px;left:34px;z-index:20;width:300px;background:var(--panel);border:1px solid var(--line-strong);border-radius:14px;padding:14px 18px;backdrop-filter:blur(10px);}
+  #wind .head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+  #wind .label{font:500 10.5px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:var(--muted);}
+  #wind .val{font:600 14px 'JetBrains Mono';color:var(--accent);}
+  #wind input[type=range]{width:100%;-webkit-appearance:none;appearance:none;background:transparent;height:18px;margin:0;}
+  #wind input[type=range]::-webkit-slider-runnable-track{height:2px;background:rgba(255,255,255,.16);border-radius:2px;}
+  #wind input[type=range]::-moz-range-track{height:2px;background:rgba(255,255,255,.16);border-radius:2px;}
+  #wind input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;margin-top:-7px;box-shadow:0 0 0 3px rgba(217,181,64,.28);cursor:pointer;}
+  #wind input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:none;box-shadow:0 0 0 3px rgba(217,181,64,.28);cursor:pointer;}
+
+  /* Legend */
+  #legend{position:absolute;bottom:30px;right:34px;z-index:20;width:200px;background:var(--panel);border:1px solid var(--line-strong);border-radius:14px;padding:12px 14px;backdrop-filter:blur(10px);}
+  #legend .head{font:500 9.5px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  #legend .bar{height:8px;border-radius:4px;background:linear-gradient(90deg,#2a6dff 0%,#5bd0ff 30%,#f3d76b 65%,#ff6a3d 100%);}
+  #legend .ends{display:flex;justify-content:space-between;margin-top:4px;font:400 10px 'JetBrains Mono';color:var(--muted);}
+
+  /* Loading */
+  #loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,6,10,.92);backdrop-filter:blur(6px);z-index:50;}
+  #loading .lbl{font:500 11px 'JetBrains Mono';letter-spacing:.32em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;animation:pulse 1.5s ease-in-out infinite;}
+  #loading .ttl{font:700 24px Manrope;letter-spacing:-.012em;color:var(--txt);margin-bottom:18px;}
+  #loading .bar{width:280px;height:2px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;}
+  #loading .fill{height:100%;background:linear-gradient(90deg,#d9b540,#f3d76b);width:0;transition:width .25s ease-out;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+</style>
+</head>
+<body>
+
+<div id="stage"></div>
+
+<a href="./Garage.dc.html" id="back"><span class="arrow">&#8249;</span>Garage</a>
+
+<div id="title">
+  <div class="eyebrow">Aerodynamics</div>
+  <div class="main">Wind tunnel &middot; particle streamlines</div>
+</div>
+
+<div id="stats">
+  <div class="name" id="sName">—</div>
+  <div class="sub" id="sSub">—</div>
+  <div class="row"><span class="k">Drag coefficient (C<sub>d</sub>)</span><span class="v" id="sCd">—</span></div>
+  <div class="row"><span class="k">Downforce</span><span class="v" id="sDF">—</span></div>
+  <div class="row"><span class="k">Frontal area</span><span class="v" id="sFA">—</span></div>
+  <div class="row"><span class="k">Top speed</span><span class="v" id="sTS">—</span></div>
+  <div class="note">Illustrative values — not measured from the 3D model.</div>
+</div>
+
+<div id="wind">
+  <div class="head"><span class="label">Wind speed</span><span class="val" id="wVal">120 km/h</span></div>
+  <input type="range" id="wSlider" min="40" max="300" value="120" step="5">
+</div>
+
+<div id="legend">
+  <div class="head">Particle speed</div>
+  <div class="bar"></div>
+  <div class="ends"><span>slow</span><span>fast</span></div>
+</div>
+
+<div id="picker"></div>
+
+<div id="loading">
+  <div class="lbl">Loading model</div>
+  <div class="ttl" id="loadTtl">—</div>
+  <div class="bar"><div class="fill" id="loadFill"></div></div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* ====== CONFIG ============================================== */
+const CARS = [
+  { id:0, name:'911 GT3 RS', maker:'Porsche · 992.2', color:'#FCBC00', glb: resolveAsset('./assets/porsche_gt3_rs.glb'),
+    cd:'0.34', df:'860 kg @ 285', fa:'2.02 m²', ts:'296 km/h' },
+  { id:1, name:'LaFerrari', maker:'Ferrari · F150', color:'#E0162B', glb: resolveAsset('./assets/laferrari.glb'), rotY:-Math.PI/2,
+    cd:'0.33', df:'360 kg @ 320', fa:'1.96 m²', ts:'350 km/h' },
+  { id:2, name:'911 Turbo', maker:'Porsche · 991', color:'#6A8FA9', glb: resolveAsset('./assets/porsche_911_turbo.glb'),
+    cd:'0.31', df:'132 kg @ 300', fa:'2.00 m²', ts:'320 km/h' },
+  { id:3, name:'Aventador SVJ', maker:'Lamborghini · LB834', color:'#E47C0E', glb: resolveAsset('./assets/aventador_svj.glb'),
+    cd:'0.35', df:'470 kg @ 240', fa:'1.99 m²', ts:'351 km/h' },
+];
+
+/* ====== SCENE SETUP ========================================= */
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(stage.clientWidth, stage.clientHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.95;
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x04060a);
+scene.fog = new THREE.Fog(0x04060a, 8, 24);
+
+const cam = new THREE.PerspectiveCamera(40, stage.clientWidth/stage.clientHeight, 0.1, 200);
+cam.position.set(4.5, 1.6, 5.5);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.06).texture;
+
+const ctrl = new OrbitControls(cam, renderer.domElement);
+ctrl.target.set(0, 0.5, 0);
+ctrl.enableDamping = true;
+ctrl.dampingFactor = 0.08;
+ctrl.minDistance = 3;
+ctrl.maxDistance = 14;
+ctrl.minPolarAngle = 0.35;
+ctrl.maxPolarAngle = 1.55;
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+const key = new THREE.DirectionalLight(0xffffff, 1.1); key.position.set(3, 4, 2); scene.add(key);
+const rim = new THREE.DirectionalLight(0x88aaff, 0.35); rim.position.set(-3, 2, -4); scene.add(rim);
+
+/* Tunnel floor with subtle grid */
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(60, 24),
+  new THREE.MeshStandardMaterial({ color:0x0a0d12, roughness:0.85, metalness:0.0 })
+);
+floor.rotation.x = -Math.PI/2; floor.position.y = 0; scene.add(floor);
+
+const grid = new THREE.GridHelper(40, 40, 0x1d2128, 0x12151b);
+grid.position.y = 0.001; scene.add(grid);
+
+/* Glass-pane "tunnel walls" hint via a thin top edge — skip walls so it doesn't feel boxed in */
+
+/* ====== CAR LOADER ========================================== */
+const loader = new GLTFLoader();
+const carCache = new Map();
+let currentCarGroup = null;
+let currentCarMeta = null;
+let carExtent = { x:2, y:0.6, z:1, len:2, cy:0.5 };  // updated per car
+
+async function loadCar(meta) {
+  document.getElementById('loadTtl').textContent = meta.name;
+  document.getElementById('loadFill').style.width = '5%';
+  document.getElementById('loading').style.display = 'flex';
+
+  let gltf;
+  if (carCache.has(meta.glb)) {
+    gltf = carCache.get(meta.glb);
+    document.getElementById('loadFill').style.width = '100%';
+  } else {
+    gltf = await new Promise((resolve, reject) => {
+      loader.load(
+        meta.glb,
+        (g) => resolve(g),
+        (xhr) => {
+          if (xhr.lengthComputable) {
+            const pct = Math.max(5, Math.min(95, Math.round(xhr.loaded / xhr.total * 100)));
+            document.getElementById('loadFill').style.width = pct + '%';
+          }
+        },
+        (err) => reject(err)
+      );
+    });
+    carCache.set(meta.glb, gltf);
+  }
+
+  /* Clone the scene to avoid sharing transforms across switches */
+  const group = gltf.scene.clone(true);
+  group.traverse(o => {
+    if (o.isMesh) {
+      o.castShadow = false;
+      o.receiveShadow = false;
+    }
+  });
+
+  /* Compute initial bbox to figure out orientation + scale */
+  const bbox = new THREE.Box3().setFromObject(group);
+  const size = bbox.getSize(new THREE.Vector3());
+  const center = bbox.getCenter(new THREE.Vector3());
+
+  /* Auto-orient: longest horizontal dim should be X.
+     Wind blows from -X to +X, so we want the car's NOSE pointing toward -X.
+     The auto-orient alone doesn't know front-from-back, and most of these
+     GLBs (Sketchfab convention) leave the nose pointing toward +X after the
+     length-axis swap — which would put the rear into the wind. Flip 180°
+     so the front meets the incoming air. Per-car noFlip override for
+     models that were authored already pointing toward -X (e.g. LaFerrari). */
+  if (typeof meta.rotY === 'number') {
+    group.rotation.y = meta.rotY;
+  } else if (size.z > size.x) {
+    group.rotation.y = -Math.PI / 2;
+  } else {
+    group.rotation.y = Math.PI;
+  }
+
+  /* Re-measure */
+  group.updateMatrixWorld(true);
+  const b2 = new THREE.Box3().setFromObject(group);
+  const s2 = b2.getSize(new THREE.Vector3());
+  const c2 = b2.getCenter(new THREE.Vector3());
+
+  /* Scale to ~3 units long */
+  const targetLen = 3.2;
+  const scale = targetLen / s2.x;
+  group.scale.setScalar(scale);
+
+  /* Re-measure post-scale, center on origin and sit on floor */
+  group.updateMatrixWorld(true);
+  const b3 = new THREE.Box3().setFromObject(group);
+  const s3 = b3.getSize(new THREE.Vector3());
+  const c3 = b3.getCenter(new THREE.Vector3());
+  group.position.x -= c3.x;
+  group.position.z -= c3.z;
+  group.position.y -= b3.min.y;  // sit on floor
+
+  return { group, size: s3, centerY: (s3.y/2) };
+}
+
+/* ====== CONTROL POINTS (repulsion centers for the velocity field) ======
+   We sample N vertices spread across the car's bounding volume.
+   Each acts as a soft repulsion source so streamlines deflect naturally
+   around the car silhouette without expensive ray-mesh intersection. */
+function computeControlPoints(group, size) {
+  const points = [];
+  const radii = [];
+
+  /* Gather all mesh vertices with world positions */
+  const tmp = new THREE.Vector3();
+  const allVerts = [];
+  group.traverse(o => {
+    if (o.isMesh && o.geometry && o.geometry.attributes.position) {
+      const pos = o.geometry.attributes.position;
+      const mat = o.matrixWorld;
+      const step = Math.max(1, Math.floor(pos.count / 400));  // ~400 verts per mesh
+      for (let i = 0; i < pos.count; i += step) {
+        tmp.fromBufferAttribute(pos, i).applyMatrix4(mat);
+        allVerts.push(tmp.clone());
+      }
+    }
+  });
+  if (allVerts.length === 0) return { points: [], radii: [], bbox: new THREE.Box3() };
+
+  /* Compute bbox of those */
+  const bb = new THREE.Box3().setFromPoints(allVerts);
+  const sz = bb.getSize(new THREE.Vector3());
+
+  /* Bin along X axis to characterize the car as a sequence of "rings" */
+  const NBINS = 18;
+  const minX = bb.min.x, maxX = bb.max.x;
+  const dx = (maxX - minX) / NBINS;
+  const cy = (bb.min.y + bb.max.y) / 2;
+  const cz = (bb.min.z + bb.max.z) / 2;
+
+  for (let i = 0; i < NBINS; i++) {
+    const xLo = minX + i * dx;
+    const xHi = xLo + dx;
+    const xMid = (xLo + xHi) / 2;
+
+    /* Vertices in this slab */
+    let yMin = Infinity, yMax = -Infinity, zMin = Infinity, zMax = -Infinity;
+    let n = 0;
+    for (const v of allVerts) {
+      if (v.x >= xLo && v.x < xHi) {
+        if (v.y < yMin) yMin = v.y;
+        if (v.y > yMax) yMax = v.y;
+        if (v.z < zMin) zMin = v.z;
+        if (v.z > zMax) zMax = v.z;
+        n++;
+      }
+    }
+    if (n < 3) continue;
+
+    /* Place repulsion points along the silhouette of this slice
+       — bottom-center and top-center to push streams up/down,
+       and side-centers to push streams around. */
+    const yMid = (yMin + yMax) / 2;
+    const zMid = (zMin + zMax) / 2;
+    const rY = (yMax - yMin) / 2;
+    const rZ = (zMax - zMin) / 2;
+    /* one repulsion sphere per slab, centered on the car axis */
+    points.push(new THREE.Vector3(xMid, yMid, zMid));
+    /* "effective radius" — average of Y and Z half-extents */
+    radii.push((rY + rZ) * 0.5);
+  }
+
+  return { points, radii, bbox: bb };
+}
+
+/* ====== STREAMLINE COMPUTATION ============================== */
+let streamLines = null;
+let streamGroup = new THREE.Group(); scene.add(streamGroup);
+let particleSystem = null;
+
+function speedToColor(t, c) {
+  /* t in [0,1] : 0 = slow (blue), 1 = fast (red-ish) */
+  t = Math.max(0, Math.min(1, t));
+  if (t < 0.33) {
+    const k = t / 0.33;
+    c.setRGB(0.16+(0.36-0.16)*k, 0.43+(0.82-0.43)*k, 1.0);
+  } else if (t < 0.66) {
+    const k = (t - 0.33) / 0.33;
+    c.setRGB(0.36+(0.95-0.36)*k, 0.82+(0.84-0.82)*k, 1.0-(1.0-0.42)*k);
+  } else {
+    const k = (t - 0.66) / 0.34;
+    c.setRGB(0.95+(1.0-0.95)*k, 0.84-(0.84-0.42)*k, 0.42-(0.42-0.24)*k);
+  }
+  return c;
+}
+
+function buildStreamlines(ctrl, size) {
+  /* Dispose old */
+  while (streamGroup.children.length) {
+    const c = streamGroup.children.pop();
+    if (c.geometry) c.geometry.dispose();
+    if (c.material) c.material.dispose();
+  }
+
+  if (!ctrl.points.length) return;
+  const bb = ctrl.bbox;
+
+  const inflowX = bb.min.x - size.x * 0.8;
+  const outflowX = bb.max.x + size.x * 1.6;
+  const stepSize = 0.04;
+  const maxSteps = Math.ceil((outflowX - inflowX) / stepSize * 1.4);
+
+  /* Grid of streamline seeds in Y × Z plane */
+  const NY = 8, NZ = 8;
+  const ySpan = size.y * 1.3;
+  const zSpan = size.z * 1.3;
+  const yCenter = (bb.min.y + bb.max.y) / 2;
+  const zCenter = (bb.min.z + bb.max.z) / 2;
+
+  const allLines = [];
+
+  for (let iy = 0; iy < NY; iy++) {
+    for (let iz = 0; iz < NZ; iz++) {
+      const y0 = yCenter - ySpan/2 + (iy + 0.5) * (ySpan / NY);
+      const z0 = zCenter - zSpan/2 + (iz + 0.5) * (zSpan / NZ);
+
+      /* Skip lines that start inside the car silhouette */
+      let blocked = false;
+      for (let k = 0; k < ctrl.points.length; k++) {
+        const cp = ctrl.points[k];
+        const r = ctrl.radii[k];
+        if (cp.distanceTo(new THREE.Vector3(inflowX + size.x * 0.4, y0, z0)) < r * 0.7) { blocked = true; break; }
+      }
+      if (blocked) continue;
+
+      const posList = [];
+      const speedList = [];
+      let pos = new THREE.Vector3(inflowX, y0, z0);
+      const vel = new THREE.Vector3(1, 0, 0);
+
+      let stuckInside = false;
+
+      for (let step = 0; step < maxSteps; step++) {
+        posList.push(pos.x, pos.y, pos.z);
+
+        /* Compute velocity field at pos: baseline + sum of repulsions */
+        vel.set(1, 0, 0);
+        for (let k = 0; k < ctrl.points.length; k++) {
+          const cp = ctrl.points[k];
+          const r = ctrl.radii[k];
+          const dx = pos.x - cp.x, dy = pos.y - cp.y, dz = pos.z - cp.z;
+          const d2 = dx*dx + dy*dy + dz*dz;
+          const soft = r * r * 1.4;
+          const inv = r * r * r * 0.9 / Math.pow(d2 + soft, 1.6);
+          vel.x += dx * inv;
+          vel.y += dy * inv;
+          vel.z += dz * inv;
+        }
+        /* Ground constraint: prevent going below floor */
+        if (pos.y < 0.02 && vel.y < 0) vel.y = Math.abs(vel.y) * 0.2;
+
+        const spd = vel.length();
+        speedList.push(spd);
+
+        if (spd < 0.05) { stuckInside = true; break; }
+
+        /* Integrate */
+        pos.x += vel.x / spd * stepSize;
+        pos.y += vel.y / spd * stepSize;
+        pos.z += vel.z / spd * stepSize;
+
+        if (pos.x > outflowX) break;
+      }
+
+      /* Skip very short / stuck lines */
+      if (stuckInside || posList.length < 30) continue;
+
+      allLines.push({ pos: posList, speed: speedList });
+    }
+  }
+
+  /* Build LineGeometry per streamline with per-vertex colors */
+  let speedMin = Infinity, speedMax = -Infinity;
+  for (const ln of allLines) {
+    for (const s of ln.speed) { if (s < speedMin) speedMin = s; if (s > speedMax) speedMax = s; }
+  }
+  const speedRange = Math.max(0.001, speedMax - speedMin);
+
+  const lineMat = new THREE.LineBasicMaterial({ vertexColors:true, transparent:true, opacity:0.35 });
+  const colTmp = new THREE.Color();
+
+  for (const ln of allLines) {
+    const n = ln.speed.length;
+    const positions = new Float32Array(ln.pos);
+    const colors = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const t = (ln.speed[i] - speedMin) / speedRange;
+      speedToColor(t, colTmp);
+      colors[i*3] = colTmp.r; colors[i*3+1] = colTmp.g; colors[i*3+2] = colTmp.b;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    streamGroup.add(new THREE.Line(geo, lineMat));
+  }
+
+  /* Particles: one per streamline, traveling along it */
+  const partCount = allLines.length * 4;  // multiple beads per line
+  const partPos = new Float32Array(partCount * 3);
+  const partCol = new Float32Array(partCount * 3);
+
+  const partGeo = new THREE.BufferGeometry();
+  partGeo.setAttribute('position', new THREE.BufferAttribute(partPos, 3));
+  partGeo.setAttribute('color', new THREE.BufferAttribute(partCol, 3));
+
+  const partMat = new THREE.PointsMaterial({
+    size: 0.07, sizeAttenuation:true, vertexColors:true, transparent:true, opacity:0.95,
+    depthWrite:false, blending:THREE.AdditiveBlending,
+  });
+  particleSystem = new THREE.Points(partGeo, partMat);
+  streamGroup.add(particleSystem);
+
+  /* Save for animation tick */
+  streamLines = { lines: allLines, partsPerLine: 4, speedMin, speedRange };
+}
+
+let animPhase = 0;
+function tickParticles(dt, windSpeedFactor) {
+  if (!streamLines || !particleSystem) return;
+  animPhase += dt * windSpeedFactor;
+
+  const posAttr = particleSystem.geometry.attributes.position;
+  const colAttr = particleSystem.geometry.attributes.color;
+  const arr = posAttr.array;
+  const carr = colAttr.array;
+  const colTmp = new THREE.Color();
+
+  let p = 0;
+  const { lines, partsPerLine, speedMin, speedRange } = streamLines;
+  for (let li = 0; li < lines.length; li++) {
+    const ln = lines[li];
+    const n = ln.speed.length;
+    for (let bi = 0; bi < partsPerLine; bi++) {
+      const phase = (animPhase * 0.6 + li * 0.17 + bi / partsPerLine) % 1;
+      const idx = Math.min(n - 1, Math.floor(phase * (n - 1)));
+      arr[p*3] = ln.pos[idx*3];
+      arr[p*3+1] = ln.pos[idx*3+1];
+      arr[p*3+2] = ln.pos[idx*3+2];
+      const t = (ln.speed[idx] - speedMin) / speedRange;
+      speedToColor(t, colTmp);
+      carr[p*3] = colTmp.r; carr[p*3+1] = colTmp.g; carr[p*3+2] = colTmp.b;
+      p++;
+    }
+  }
+  posAttr.needsUpdate = true;
+  colAttr.needsUpdate = true;
+}
+
+/* ====== ACTIVE CAR SWITCHING ================================ */
+async function switchTo(idx) {
+  document.querySelectorAll('.pchip').forEach((el, i) => el.classList.toggle('active', i === idx));
+
+  /* Tear down old */
+  if (currentCarGroup) {
+    scene.remove(currentCarGroup);
+    currentCarGroup = null;
+  }
+
+  const meta = CARS[idx];
+  currentCarMeta = meta;
+
+  /* Fill stat panel */
+  document.getElementById('sName').textContent = meta.name;
+  document.getElementById('sSub').textContent = meta.maker;
+  document.getElementById('sCd').textContent = meta.cd;
+  document.getElementById('sDF').textContent = meta.df;
+  document.getElementById('sFA').textContent = meta.fa;
+  document.getElementById('sTS').textContent = meta.ts;
+  document.documentElement.style.setProperty('--accent', meta.color);
+
+  try {
+    const { group, size, centerY } = await loadCar(meta);
+    currentCarGroup = group;
+    scene.add(group);
+    carExtent = { x:size.x, y:size.y, z:size.z, cy:centerY };
+
+    /* Compute control points and streamlines */
+    const cp = computeControlPoints(group, size);
+    buildStreamlines(cp, size);
+
+    /* Position camera nicely around the car */
+    const r = Math.max(size.x, size.y, size.z);
+    cam.position.set(r * 1.3, r * 0.7, r * 1.7);
+    ctrl.target.set(0, size.y * 0.45, 0);
+    ctrl.update();
+
+    document.getElementById('loading').style.display = 'none';
+  } catch (e) {
+    console.error('Car load failed', e);
+    document.getElementById('loadTtl').textContent = 'failed to load';
+  }
+}
+
+/* ====== BUILD PICKER ======================================== */
+const picker = document.getElementById('picker');
+CARS.forEach((c, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'pchip';
+  btn.innerHTML = '<span class="swatch" style="background:'+c.color+'"></span>'+c.name;
+  btn.onclick = () => switchTo(i);
+  picker.appendChild(btn);
+});
+
+/* ====== WIND SLIDER ========================================= */
+const wSlider = document.getElementById('wSlider');
+const wVal = document.getElementById('wVal');
+let windFactor = 120 / 100;  // km/h → animation rate scale
+wSlider.addEventListener('input', () => {
+  const v = +wSlider.value;
+  wVal.textContent = v + ' km/h';
+  windFactor = v / 100;
+});
+
+/* ====== ANIMATION LOOP ====================================== */
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  ctrl.update();
+  tickParticles(dt, windFactor);
+  renderer.render(scene, cam);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+window.addEventListener('resize', () => {
+  cam.aspect = stage.clientWidth / stage.clientHeight;
+  cam.updateProjectionMatrix();
+  renderer.setSize(stage.clientWidth, stage.clientHeight);
+});
+
+/* ====== KICK OFF — read ?car=N or default to 0 ============== */
+const params = new URLSearchParams(location.search);
+const startIdx = Math.max(0, Math.min(CARS.length - 1, parseInt(params.get('car') || '0', 10) || 0));
+switchTo(startIdx);
+
+</script>
+</body>
+</html>

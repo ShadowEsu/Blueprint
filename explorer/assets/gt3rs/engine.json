@@ -1,0 +1,207 @@
+[
+ {
+  "name": "engine_full",
+  "file": "gt3rs/engine_detail/engine_full.glb",
+  "tris": 3832
+ },
+ {
+  "name": "engine_solid_01",
+  "file": "gt3rs/engine_detail/engine_solid_01.glb",
+  "tris": 520
+ },
+ {
+  "name": "engine_solid_02",
+  "file": "gt3rs/engine_detail/engine_solid_02.glb",
+  "tris": 172
+ },
+ {
+  "name": "engine_solid_03",
+  "file": "gt3rs/engine_detail/engine_solid_03.glb",
+  "tris": 172
+ },
+ {
+  "name": "engine_solid_04",
+  "file": "gt3rs/engine_detail/engine_solid_04.glb",
+  "tris": 164
+ },
+ {
+  "name": "engine_solid_05",
+  "file": "gt3rs/engine_detail/engine_solid_05.glb",
+  "tris": 140
+ },
+ {
+  "name": "engine_solid_06",
+  "file": "gt3rs/engine_detail/engine_solid_06.glb",
+  "tris": 140
+ },
+ {
+  "name": "engine_solid_07",
+  "file": "gt3rs/engine_detail/engine_solid_07.glb",
+  "tris": 140
+ },
+ {
+  "name": "engine_solid_08",
+  "file": "gt3rs/engine_detail/engine_solid_08.glb",
+  "tris": 140
+ },
+ {
+  "name": "engine_solid_09",
+  "file": "gt3rs/engine_detail/engine_solid_09.glb",
+  "tris": 96
+ },
+ {
+  "name": "engine_solid_10",
+  "file": "gt3rs/engine_detail/engine_solid_10.glb",
+  "tris": 88
+ },
+ {
+  "name": "engine_solid_11",
+  "file": "gt3rs/engine_detail/engine_solid_11.glb",
+  "tris": 72
+ },
+ {
+  "name": "engine_solid_12",
+  "file": "gt3rs/engine_detail/engine_solid_12.glb",
+  "tris": 72
+ },
+ {
+  "name": "engine_solid_13",
+  "file": "gt3rs/engine_detail/engine_solid_13.glb",
+  "tris": 72
+ },
+ {
+  "name": "engine_solid_14",
+  "file": "gt3rs/engine_detail/engine_solid_14.glb",
+  "tris": 72
+ },
+ {
+  "name": "engine_solid_15",
+  "file": "gt3rs/engine_detail/engine_solid_15.glb",
+  "tris": 70
+ },
+ {
+  "name": "engine_solid_16",
+  "file": "gt3rs/engine_detail/engine_solid_16.glb",
+  "tris": 64
+ },
+ {
+  "name": "engine_solid_17",
+  "file": "gt3rs/engine_detail/engine_solid_17.glb",
+  "tris": 38
+ },
+ {
+  "name": "engine_solid_18",
+  "file": "gt3rs/engine_detail/engine_solid_18.glb",
+  "tris": 36
+ },
+ {
+  "name": "engine_solid_19",
+  "file": "gt3rs/engine_detail/engine_solid_19.glb",
+  "tris": 27
+ },
+ {
+  "name": "engine_solid_20",
+  "file": "gt3rs/engine_detail/engine_solid_20.glb",
+  "tris": 24
+ },
+ {
+  "name": "engine_solid_21",
+  "file": "gt3rs/engine_detail/engine_solid_21.glb",
+  "tris": 24
+ },
+ {
+  "name": "engine_solid_22",
+  "file": "gt3rs/engine_detail/engine_solid_22.glb",
+  "tris": 24
+ },
+ {
+  "name": "engine_solid_23",
+  "file": "gt3rs/engine_detail/engine_solid_23.glb",
+  "tris": 24
+ },
+ {
+  "name": "engine_solid_24",
+  "file": "gt3rs/engine_detail/engine_solid_24.glb",
+  "tris": 24
+ },
+ {
+  "name": "engine_solid_25",
+  "file": "gt3rs/engine_detail/engine_solid_25.glb",
+  "tris": 24
+ },
+ {
+  "name": "engine_solid_26",
+  "file": "gt3rs/engine_detail/engine_solid_26.glb",
+  "tris": 24
+ },
+ {
+  "name": "engine_solid_27",
+  "file": "gt3rs/engine_detail/engine_solid_27.glb",
+  "tris": 24
+ },
+ {
+  "name": "engine_solid_28",
+  "file": "gt3rs/engine_detail/engine_solid_28.glb",
+  "tris": 23
+ },
+ {
+  "name": "engine_solid_29",
+  "file": "gt3rs/engine_detail/engine_solid_29.glb",
+  "tris": 20
+ },
+ {
+  "name": "engine_solid_30",
+  "file": "gt3rs/engine_detail/engine_solid_30.glb",
+  "tris": 18
+ },
+ {
+  "name": "engine_solid_31",
+  "file": "gt3rs/engine_detail/engine_solid_31.glb",
+  "tris": 14
+ },
+ {
+  "name": "engine_solid_32",
+  "file": "gt3rs/engine_detail/engine_solid_32.glb",
+  "tris": 14
+ },
+ {
+  "name": "engine_solid_33",
+  "file": "gt3rs/engine_detail/engine_solid_33.glb",
+  "tris": 14
+ },
+ {
+  "name": "engine_solid_34",
+  "file": "gt3rs/engine_detail/engine_solid_34.glb",
+  "tris": 14
+ },
+ {
+  "name": "engine_solid_35",
+  "file": "gt3rs/engine_detail/engine_solid_35.glb",
+  "tris": 12
+ },
+ {
+  "name": "engine_solid_36",
+  "file": "gt3rs/engine_detail/engine_solid_36.glb",
+  "tris": 12
+ },
+ {
+  "name": "engine_solid_37",
+  "file": "gt3rs/engine_detail/engine_solid_37.glb",
+  "tris": 12
+ },
+ {
+  "name": "engine_solid_38",
+  "file": "gt3rs/engine_detail/engine_solid_38.glb",
+  "tris": 12
+ },
+ {
+  "name": "engine_solid_39",
+  "file": "gt3rs/engine_detail/engine_solid_39.glb",
+  "tris": 12
+ },
+ {
+  "name": "engine_solid_40",
+  "file": "gt3rs/engine_detail/engine_solid_40.glb",
+  "tris": 12
+ }
+]

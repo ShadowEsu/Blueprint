@@ -1,5 +1,9 @@
-# Keep Vercel deploy under 100MB — large GLBs load via jsDelivr from GitHub (see src/config.js)
-assets/models/
+# Large GLBs served via jsDelivr from GitHub (see explorer/asset-config.js)
+explorer/assets/*.glb
+explorer/assets/gt3rs/*.glb
+explorer/assets/chiron/*.glb
+explorer/uploads/*.glb
+explorer/uploads/engine_solid_*.glb
 assets/blueprint-showroom-car.glb
 agent/
 integrations/

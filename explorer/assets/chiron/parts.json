@@ -1,0 +1,117 @@
+[
+ {
+  "name": "InteriorC",
+  "file": "chiron/parts/InteriorC.glb",
+  "tris": 49802
+ },
+ {
+  "name": "Wheel",
+  "file": "chiron/parts/Wheel.glb",
+  "tris": 46078
+ },
+ {
+  "name": "Coloured",
+  "file": "chiron/parts/Coloured.glb",
+  "tris": 38858
+ },
+ {
+  "name": "Textured2B",
+  "file": "chiron/parts/Textured2B.glb",
+  "tris": 25356
+ },
+ {
+  "name": "Paint",
+  "file": "chiron/parts/Paint.glb",
+  "tris": 24406
+ },
+ {
+  "name": "LightB",
+  "file": "chiron/parts/LightB.glb",
+  "tris": 14256
+ },
+ {
+  "name": "Callipers",
+  "file": "chiron/parts/Callipers.glb",
+  "tris": 14206
+ },
+ {
+  "name": "Textured3A",
+  "file": "chiron/parts/Textured3A.glb",
+  "tris": 10646
+ },
+ {
+  "name": "Carbon1",
+  "file": "chiron/parts/Carbon1.glb",
+  "tris": 4154
+ },
+ {
+  "name": "Window",
+  "file": "chiron/parts/Window.glb",
+  "tris": 2464
+ },
+ {
+  "name": "TexturedD",
+  "file": "chiron/parts/TexturedD.glb",
+  "tris": 1880
+ },
+ {
+  "name": "InteriorTillingColour",
+  "file": "chiron/parts/InteriorTillingColour.glb",
+  "tris": 1667
+ },
+ {
+  "name": "Base",
+  "file": "chiron/parts/Base.glb",
+  "tris": 1646
+ },
+ {
+  "name": "Grille1A",
+  "file": "chiron/parts/Grille1A.glb",
+  "tris": 802
+ },
+ {
+  "name": "SeatBelt",
+  "file": "chiron/parts/SeatBelt.glb",
+  "tris": 436
+ },
+ {
+  "name": "WindowInside",
+  "file": "chiron/parts/WindowInside.glb",
+  "tris": 376
+ },
+ {
+  "name": "Grille6C",
+  "file": "chiron/parts/Grille6C.glb",
+  "tris": 335
+ },
+ {
+  "name": "BadgeB",
+  "file": "chiron/parts/BadgeB.glb",
+  "tris": 304
+ },
+ {
+  "name": "Grille4A",
+  "file": "chiron/parts/Grille4A.glb",
+  "tris": 94
+ },
+ {
+  "name": "Grille3A",
+  "file": "chiron/parts/Grille3A.glb",
+  "tris": 76
+ },
+ {
+  "name": "ManufacturerPlateC",
+  "file": "chiron/parts/ManufacturerPlateC.glb",
+  "tris": 64
+ },
+ {
+  "name": "CalliperBadge",
+  "file": "chiron/parts/CalliperBadge.glb",
+  "tris": 32
+ },
+ {
+  "name": "Grille2A",
+  "file": "chiron/parts/Grille2A.glb",
+  "tris": 18
+ }
+]

@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./asset-config.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #06080b; overflow: hidden; }
+  .gtrs-range { -webkit-appearance:none; appearance:none; height:2px; border-radius:2px; outline:none; cursor:pointer; background: var(--track-bar, rgba(255,255,255,.16)); }
+  .gtrs-range::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background: var(--thumb, #e6e9ee); cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.4); transition:box-shadow .18s; }
+  .gtrs-range:hover::-webkit-slider-thumb, .gtrs-range:focus::-webkit-slider-thumb { box-shadow:0 4px 14px rgba(0,0,0,.4), 0 0 0 5px var(--thumb-halo, rgba(217,181,64,.25)); }
+  .gtrs-range::-moz-range-thumb { width:18px; height:18px; border:none; border-radius:50%; background: var(--thumb, #e6e9ee); cursor:pointer; }
+  .chip { transition: transform .12s; }
+  .chip:hover { transform: translateY(-1px); }
+  .nav-btn { transition: background-color .15s, color .15s, transform .15s; }
+  .nav-btn:hover { transform: scale(1.06); }
+  .pulse { animation: gtrsPulse 1.6s ease-in-out infinite; }
+  @keyframes gtrsPulse { 0%,100% { opacity:.6; } 50% { opacity:1; } }
+  .bg-layer { transition: opacity .55s ease; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+  import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  window.THREE = THREE; window.OrbitControls = OrbitControls;
+  window.RoomEnvironment = RoomEnvironment; window.GLTFLoader = GLTFLoader;
+  window.dispatchEvent(new Event('three-ready'));
+</script>
+</helmet>
+
+<div style="position:relative;width:100vw;height:100vh;overflow:hidden;background:#06080b;font-family:Manrope,sans-serif;color:{{ tFg }};--thumb:{{ tThumb }};--track-bar:{{ tTrackBar }};--thumb-halo:{{ tThumbHalo }};">
+
+  <!-- BG LAYERS (two stacked, crossfade between car themes) -->
+  <div class="bg-layer" style="position:absolute;inset:0;background:{{ tBg }};opacity:1;z-index:0;"></div>
+
+  <!-- 3D VIEWPORT -->
+  <div ref="{{ contRef }}" style="position:absolute;inset:0;z-index:1;"></div>
+
+  <!-- LOADING OVERLAY -->
+  <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(6,8,11,.94);backdrop-filter:blur(8px);z-index:40;color:#e6e9ee;">
+      <div style="font:300 11px 'JetBrains Mono';letter-spacing:.32em;text-transform:uppercase;color:#d9b540;margin-bottom:18px;" class="pulse">{{ loadingLabel }}</div>
+      <div style="font:700 30px Manrope;letter-spacing:-.015em;color:#f3f5f8;margin-bottom:6px;">{{ loadingTitle }}</div>
+      <div style="font:400 12px Manrope;letter-spacing:.18em;text-transform:uppercase;color:#7a8290;margin-bottom:32px;">{{ loadingSub }}</div>
+      <div style="width:360px;height:2px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;">
+        <div style="height:100%;background:linear-gradient(90deg,#d9b540,#f3d76b);width:{{ progressPct }}%;transition:width .25s ease-out;"></div>
+      </div>
+      <div style="font:500 11px 'JetBrains Mono';letter-spacing:.22em;color:#7a8290;margin-top:14px;">{{ progressPct }}%</div>
+    </div>
+  </sc-if>
+
+  <!-- BACK TO GARAGE -->
+  <a href="./Garage.dc.html" style="position:absolute;top:36px;left:48px;z-index:12;display:flex;align-items:center;gap:8px;padding:8px 14px 8px 11px;border-radius:999px;background:{{ tNavBg }};border:1px solid {{ tCardBd }};color:{{ tFgPri }};text-decoration:none;font:500 11.5px/1 Manrope;letter-spacing:.04em;backdrop-filter:blur(8px);"><span style="font-size:16px;line-height:0;margin-top:-2px;">&#8249;</span>Garage</a>
+
+  <!-- CAR PAGER (top-center) -->
+  <div style="position:absolute;top:42px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:10px;align-items:center;">
+    <span style="font:500 10.5px 'JetBrains Mono';letter-spacing:.24em;text-transform:uppercase;color:{{ tFgMut }};">{{ pagerLabel }}</span>
+    <div style="display:flex;gap:6px;">
+      <sc-for list="{{ dots }}" as="d" hint-placeholder-count="4">
+        <span style="display:inline-block;width:18px;height:2px;border-radius:1px;background:{{ d.bg }};"></span>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- LEFT / RIGHT NAV ARROWS -->
+  <button onClick="{{ onPrev }}" class="nav-btn" aria-label="Previous car" style="position:absolute;left:24px;top:50%;transform:translateY(-50%);z-index:11;cursor:pointer;width:48px;height:64px;border-radius:10px;background:{{ tNavBg }};border:1px solid {{ tCardBd }};color:{{ tFgPri }};font:300 26px Manrope;display:flex;align-items:center;justify-content:center;padding:0;backdrop-filter:blur(8px);">&#8249;</button>
+  <button onClick="{{ onNext }}" class="nav-btn" aria-label="Next car" style="position:absolute;right:24px;top:50%;transform:translateY(-50%);z-index:11;cursor:pointer;width:48px;height:64px;border-radius:10px;background:{{ tNavBg }};border:1px solid {{ tCardBd }};color:{{ tFgPri }};font:300 26px Manrope;display:flex;align-items:center;justify-content:center;padding:0;backdrop-filter:blur(8px);">&#8250;</button>
+
+  <!-- WORDMARK -->
+  <div style="position:absolute;top:36px;left:160px;z-index:10;">
+    <div style="font:300 12px/1 'JetBrains Mono';letter-spacing:.26em;text-transform:uppercase;color:{{ tFgMut }};margin-bottom:8px;">{{ carMaker }} &nbsp;·&nbsp; {{ carSeries }}</div>
+    <div style="font:700 30px/1 Manrope;letter-spacing:-.015em;color:{{ tFgPri }};">{{ carName }}</div>
+    <div style="font:400 12px/1 Manrope;letter-spacing:.18em;text-transform:uppercase;color:{{ tFgMut }};margin-top:9px;">{{ carTag }}</div>
+  </div>
+
+  <!-- INFO CARD -->
+  <div style="position:absolute;top:36px;right:48px;width:320px;z-index:10;">
+    <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+      <div style="background:{{ tCardBg }};backdrop-filter:blur(14px);border:1px solid {{ tCardBd }};border-radius:14px;padding:22px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <span style="font:500 10.5px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:{{ tAccent }};">Selected component</span>
+          <button onClick="{{ onReset }}" aria-label="Deselect" style="cursor:pointer;background:{{ tBtnBg }};border:1px solid {{ tCardBd }};color:{{ tFgSec }};width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:500 14px Manrope;padding:0;line-height:1;">&times;</button>
+        </div>
+        <div style="font:700 22px/1.15 Manrope;letter-spacing:-.012em;color:{{ tFgPri }};margin-bottom:12px;">{{ selName }}</div>
+        <div style="font:400 13.5px/1.6 Manrope;color:{{ tFgSec }};">{{ selDesc }}</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ noSel }}" hint-placeholder-val="{{ false }}">
+      <div style="font:400 12px/1.6 Manrope;letter-spacing:.04em;color:{{ tFgMut }};text-align:right;">Drag to orbit · scroll to zoom<br/>Click a part of the car, or use the chips below.</div>
+    </sc-if>
+  </div>
+
+  <!-- BOTTOM CONTROLS -->
+  <div style="position:absolute;left:0;right:0;bottom:0;padding:0 48px 28px;display:flex;flex-direction:column;align-items:center;gap:20px;z-index:10;pointer-events:none;">
+
+    <!-- chips -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;pointer-events:auto;">
+      <button onClick="{{ onSelectWing }}"     class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipWingStyle }}">Rear wing</button>
+      <button onClick="{{ onSelectHood }}"     class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipHoodStyle }}">Hood</button>
+      <button onClick="{{ onSelectDoors }}"    class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipDoorsStyle }}">Doors</button>
+      <button onClick="{{ onSelectWheels }}"   class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipWheelsStyle }}">Wheels &amp; brakes</button>
+      <button onClick="{{ onSelectEngine }}"   class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipEngineStyle }}">Engine</button>
+      <button onClick="{{ onSelectExhaust }}"  class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipExhaustStyle }}">Exhaust</button>
+      <button onClick="{{ onSelectInterior }}" class="chip" style="cursor:pointer;border-radius:999px;padding:8px 16px;font:500 12px/1 Manrope;letter-spacing:.04em;border:1px solid;{{ chipInteriorStyle }}">Interior</button>
+    </div>
+
+    <!-- explode slider -->
+    <div style="display:flex;align-items:center;gap:20px;pointer-events:auto;background:{{ tSliderBg }};backdrop-filter:blur(14px);border:1px solid {{ tCardBd }};border-radius:14px;padding:14px 22px;min-width:540px;">
+      <span style="font:500 10px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:{{ tFgMut }};width:80px;">Assembled</span>
+      <input type="range" min="0" max="100" value="{{ pct }}" onInput="{{ onSlider }}" class="gtrs-range" style="flex:1;min-width:280px;" />
+      <span style="font:500 10px 'JetBrains Mono';letter-spacing:.22em;text-transform:uppercase;color:{{ tFgMut }};width:80px;text-align:right;">Exploded</span>
+      <span style="font:600 13px 'JetBrains Mono';color:{{ tAccent }};width:42px;text-align:right;">{{ pct }}%</span>
+    </div>
+  </div>
+
+  <!-- Attribution -->
+  <div style="position:absolute;bottom:8px;left:14px;font:400 9.5px 'JetBrains Mono';color:{{ tFgMut }};letter-spacing:.06em;z-index:10;opacity:.7;">{{ attribution }}</div>
+
+  <!-- AI ASSISTANT (bottom-right) -->
+  <sc-if value="{{ chatClosed }}" hint-placeholder-val="{{ true }}">
+    <button onClick="{{ onOrbClick }}" aria-label="Ask the AI assistant" style="position:absolute;bottom:28px;right:28px;z-index:30;width:60px;height:60px;border-radius:50%;cursor:pointer;border:1px solid rgba(217,181,64,.5);background:radial-gradient(circle at 50% 42%, rgba(217,181,64,.34), rgba(12,15,20,.95) 72%);box-shadow:0 0 26px rgba(217,181,64,.32), inset 0 0 18px rgba(217,181,64,.18);display:flex;align-items:center;justify-content:center;padding:0;">
+      <span style="width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,#f7ecc4,#d9b540);box-shadow:0 0 12px #d9b540;"></span>
+    </button>
+  </sc-if>
+
+  <sc-if value="{{ chatOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;bottom:28px;right:28px;z-index:31;width:360px;max-height:70vh;display:flex;flex-direction:column;overflow:hidden;background:linear-gradient(180deg, rgba(20,24,30,.92), rgba(10,13,17,.94));backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.6);">
+      <div style="display:flex;align-items:center;gap:9px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);">
+        <span style="width:9px;height:9px;border-radius:50%;background:#d9b540;box-shadow:0 0 10px #d9b540;"></span>
+        <span style="flex:1;font:600 13px Manrope;letter-spacing:.02em;color:#f3f5f8;">Assistant</span>
+        <button onClick="{{ onChatClose }}" aria-label="Close" style="cursor:pointer;background:none;border:none;color:#7a8290;font-size:19px;line-height:1;padding:0;">&times;</button>
+      </div>
+      <div ref="{{ chatLogRef }}" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:9px;">
+        <sc-for list="{{ chatLog }}" as="msg" hint-placeholder-count="1">
+          <div style="{{ msg.style }}">{{ msg.text }}</div>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:8px;padding:12px;border-top:1px solid rgba(255,255,255,.08);">
+        <input ref="{{ chatInputRef }}" onKeyDown="{{ onChatKey }}" placeholder="Ask about this car…" style="flex:1;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);color:#e6e9ee;padding:10px 12px;border-radius:10px;font:400 13px Manrope;outline:none;" />
+        <button onClick="{{ onChatSend }}" style="cursor:pointer;background:#d9b540;color:#1a1408;border:none;border-radius:10px;padding:0 15px;font:700 12px Manrope;">{{ chatSendLabel }}</button>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+/* ===== CAR REGISTRY ============================================ */
+
+const GENERIC_CATEGORIZE = (name) => {
+  const n = name.toLowerCase();
+  if (/wheel|tyre|tire|brake|calliper|caliper|rim|disc(?!harge)/.test(n)) return 'wheels';
+  if (/door|mirror/.test(n)) return 'doors';
+  if (/wing|spoiler|aero|splitter|diffuser/.test(n)) return 'wing';
+  if (/hood|bonnet|frunk|trunk/.test(n)) return 'hood';
+  if (/engine|intake|radiator|motor|cylinder|piston|manifold/.test(n)) return 'engine';
+  if (/exhaust|muffler|heatshield|tailpipe/.test(n)) return 'exhaust';
+  if (/seat|dash|steer|interior|cockpit|gauge|shifter/.test(n)) return 'interior';
+  return 'body';
+};
+
+const PORSCHE_INFO = {
+  wing:     { name: 'Swan-neck rear wing',  desc: 'Top-mount struts keep the wing\u2019s high-pressure underside clean, generating significantly more downforce than a conventional bottom-mount design.' },
+  hood:     { name: 'Hood & frunk',          desc: 'Carbon-composite hood with a central duct feeding the front radiators. A small luggage compartment sits below.' },
+  doors:    { name: 'Doors & mirrors',       desc: 'Lightweight aluminium doors with magnesium frames and thinner side glazing \u2014 several kilos lighter than the standard 911 door.' },
+  wheels:   { name: 'Wheels & brakes',       desc: 'Forged center-lock wheels on carbon-ceramic discs (PCCB) with yellow calipers. Drilled discs vent heat and shed water on the road.' },
+  engine:   { name: 'Flat-six engine',       desc: '4.0 L naturally aspirated, mounted behind the rear axle. ~525 hp, 9000 rpm redline, dry-sump lubrication for sustained track loads.' },
+  exhaust:  { name: 'Exhaust system',        desc: 'Lightweight titanium exhaust with center-exit tailpipes \u2014 less mass, freer flow, and the trademark flat-six bark.' },
+  interior: { name: 'Interior & cockpit',    desc: 'Carbon bucket seats, six-point harnesses, and a stripped, driver-focused cockpit \u2014 nothing that doesn\u2019t make the car faster.' },
+};
+
+const LAFERRARI_INFO = {
+  wing:     { name: 'Active rear spoiler',   desc: 'Computer-controlled rear wing that morphs between low-drag and high-downforce modes depending on speed, steering, and braking inputs.' },
+  hood:     { name: 'Carbon clamshell hood', desc: 'Vented carbon-fiber bonnet pulling hot radiator air up and away from the front wheels. Lightweight and structurally bonded to the tub.' },
+  doors:    { name: 'Butterfly doors',       desc: 'Doors hinged at the A-pillar and roof \u2014 swing up and out for cleaner ingress around the carbon monocoque\u2019s wide sills.' },
+  wheels:   { name: 'Wheels & brakes',       desc: 'Forged alloys on Brembo carbon-ceramic discs. Six-piston front calipers and an F1-derived brake-by-wire blend with KERS regen.' },
+  engine:   { name: '6.3 L V12 hybrid',      desc: '6262 cc naturally aspirated V12 paired with a 120 kW HY-KERS motor. 950 hp combined, 9250 rpm redline \u2014 Ferrari\u2019s last NA V12 flagship.' },
+  exhaust:  { name: 'Exhaust system',        desc: 'High-mount triple-tip exhaust with equal-length headers. Tuned to keep the V12\u2019s top-end shriek dominant over the hybrid hum.' },
+  interior: { name: 'F1-style cockpit',      desc: 'Fixed carbon seats with a sliding pedal box and steering column \u2014 the driver moves around the chassis, not the other way around.' },
+};
+
+const TURBO_INFO = {
+  wing:     { name: 'Deployable rear wing',  desc: 'Three-stage adaptive spoiler \u2014 retracts flush, raises for stability above ~120 km/h, and tilts as an airbrake under heavy braking.' },
+  hood:     { name: 'Aluminium bonnet',      desc: 'Pressed aluminium frunk lid \u2014 lighter than steel, covering a useful luggage well and the front cooling stack.' },
+  doors:    { name: 'Doors & mirrors',       desc: 'Aluminium doors with frameless glass and aerodynamically tuned mirror caps that route air past the front wheel arches.' },
+  wheels:   { name: 'Centre-lock wheels',    desc: '20-inch forged centre-lock wheels with optional carbon-ceramic discs (PCCB). Yellow calipers signal the upgraded stopping kit.' },
+  engine:   { name: '3.8 L twin-turbo flat-six', desc: 'Rear-mounted 3.8 L flat-six with twin variable-vane turbochargers. ~520 hp, 660 Nm, and all-wheel drive routes the torque without drama.' },
+  exhaust:  { name: 'Sports exhaust',        desc: 'Stainless-steel system with electronically actuated valves \u2014 quiet for cruising, opens up to a flat-six rumble in Sport+.' },
+  interior: { name: '2+2 cockpit',           desc: 'Leather sport seats, analog tach centre stage, two vestigial rear seats. A daily-driver cabin grafted onto a 320 km/h platform.' },
+};
+
+const SVJ_INFO = {
+  wing:     { name: 'ALA 2.0 active aero',   desc: 'Rear wing with flaps that open to stall airflow for low drag, or close to maximise downforce. Splits airflow left/right for cornering grip.' },
+  hood:     { name: 'Carbon frunk lid',      desc: 'Lightweight carbon hood over a shallow front luggage area \u2014 the V12 sits behind the cockpit, so this is purely cooling and storage.' },
+  doors:    { name: 'Scissor doors',         desc: 'Hinged at the front and rotating upward \u2014 a Lamborghini V12 signature since the Countach. Carbon skinned and dramatically light.' },
+  wheels:   { name: 'Forged wheels & CCB',   desc: 'Lightweight forged wheels on carbon-ceramic brakes. Bridgestone Potenza Sport tyres developed specifically for the SVJ.' },
+  engine:   { name: '6.5 L naturally aspirated V12', desc: 'Mid-mounted 6498 cc V12 \u2014 770 hp, 8500 rpm redline. The last unhybridised Lamborghini V12 before the Revuelto generation.' },
+  exhaust:  { name: 'High-mount titanium exhaust', desc: 'Triple high-exit tailpipes feeding a top-mount titanium system. Short, light, and aggressively voiced.' },
+  interior: { name: 'Carbon cockpit',        desc: 'Carbon-shell sport seats, Alcantara everywhere, digital cluster, and the iconic red ignition flap over the start button.' },
+};
+
+const CHIRON_PARTS = [
+  'Paint', 'Coloured', 'Carbon1', 'Base', 'Textured2B', 'TexturedD', 'Textured3A',
+  'LightB', 'Window', 'WindowInside', 'BadgeB', 'ManufacturerPlateC',
+  'Grille1A', 'Grille2A', 'Grille3A', 'Grille4A', 'Grille6C',
+  'Wheel', 'Callipers', 'CalliperBadge',
+  'InteriorC', 'InteriorTillingColour', 'SeatBelt',
+];
+
+const TOURBILLON_INFO = {
+  wing:     { name: 'Active rear wing',      desc: 'Multi-position wing \u2014 retracts flush at speed for low drag, deploys as an airbrake under heavy braking, and angles for downforce mid-corner.' },
+  hood:     { name: 'Front hood',            desc: 'Long carbon clamshell covering the front radiators and a shallow luggage area. The Tourbillon\u2019s nose pulls heavy cooling air through, then exhausts it over the hood.' },
+  doors:    { name: 'Dihedral doors',        desc: 'Carbon doors hinged at the front \u2014 pivot up and forward like the Chiron but cleaner integrated into the body.' },
+  wheels:   { name: 'Wheels & brakes',       desc: 'Forged magnesium wheels on Brembo carbon-ceramic discs. Eight-piston front calipers stop the car from north of 400 km/h.' },
+  engine:   { name: '8.3 L V16 hybrid',      desc: 'Naturally aspirated 8.3 L V16 paired with three electric motors. 1775 hp combined, 9000 rpm redline. Cosworth-built \u2014 the first NA Bugatti since the original Veyron prototypes.' },
+  exhaust:  { name: 'Exhaust system',        desc: 'High-mounted titanium exhaust with center-exit tailpipes. Bugatti tuned the exhaust note specifically to highlight the V16\u2019s linearity all the way to its high redline.' },
+  interior: { name: 'Cockpit & cabin',       desc: 'Two-seat cabin built around a watchmaker\u2019s aesthetic \u2014 a mechanical analog gauge cluster machined like a tourbillon movement instead of a screen.' },
+};
+
+/* NOTE on the Bugatti model: this GLB is organised by MATERIAL group rather than
+   by car part. The body, hood, doors, wing, and engine cover are all merged into
+   a single "group1" mass under shared materials, so we can only cleanly explode the
+   wheels and split out the interior/seatbelt groups. The Porsche and LaFerrari
+   have proper per-part separation, so all seven chips work on those. */
+
+const CARS = [
+  {
+    id: 'porsche-gt3-rs',
+    glb: resolveAsset('./assets/porsche_gt3_rs.glb'),
+    sizeMB: '18 MB · 291 meshes',
+    maker: 'Porsche',
+    series: '992.2',
+    name: '911 GT3 RS',
+    tag: 'Track · 525 hp · 1450 kg',
+    info: PORSCHE_INFO,
+    attribution: '3D model: Black Snow \u00B7 Sketchfab \u00B7 CC BY 4.0',
+    paint: 'silver',
+    categorize: (name) => {
+      const n = name.toLowerCase();
+      if (n.includes('carbon_wing') || n.includes('gt3rs_spoiler')) return 'wing';
+      if (n.includes('carbon_hood')) return 'hood';
+      if (n.includes('door_l') || n.includes('door_r') || n.includes('doorpanel') || n.includes('doorglass') || n.includes('mirror_')) return 'doors';
+      if (n.includes('wheels_20x9') || n.includes('brakedisc') || /^object_4\./.test(n)) return 'wheels';
+      if (n === 'twixer_992_engine' || n.includes('intake_tt') || n.includes('transaxle') || n.includes('driveshaft') || n.includes('diff_f') || n.includes('radiator')) return 'engine';
+      if (n.includes('exhaust') || n.includes('muffler') || n.includes('heatshield')) return 'exhaust';
+      if (n.includes('seat_') || n.includes('seats_') || n.includes('dash_') || n.includes('steer_') || n.includes('pedal') || n.includes('shifter') || n.includes('gauges_screen') || n.includes('needle_tacho') || n.includes('signalstalk') || n.includes('fascia') || n.includes('black_dash') || n.includes('chrome_dash')) return 'interior';
+      return 'body';
+    },
+  },
+  {
+    id: 'ferrari-laferrari',
+    glb: resolveAsset('./assets/laferrari.glb'),
+    sizeMB: 'Ferrari LaFerrari',
+    maker: 'Ferrari',
+    series: 'F150',
+    name: 'LaFerrari',
+    tag: 'V12 hybrid \u00B7 950 hp \u00B7 1255 kg',
+    info: LAFERRARI_INFO,
+    attribution: '3D model: Sketchfab \u00B7 CC BY 4.0',
+    paint: 'red',
+    categorize: GENERIC_CATEGORIZE,
+  },
+  {
+    id: 'porsche-911-turbo',
+    glb: resolveAsset('./assets/porsche_911_turbo.glb'),
+    sizeMB: 'Porsche 911 Turbo',
+    maker: 'Porsche',
+    series: '991',
+    name: '911 Turbo',
+    tag: 'Twin-turbo flat-six \u00B7 520 hp \u00B7 1595 kg',
+    info: TURBO_INFO,
+    attribution: '3D model: Sketchfab \u00B7 CC BY 4.0',
+    paint: 'silver',
+    categorize: GENERIC_CATEGORIZE,
+  },
+  {
+    id: 'lamborghini-aventador-svj',
+    glb: resolveAsset('./assets/aventador_svj.glb'),
+    sizeMB: 'Lamborghini Aventador SVJ',
+    maker: 'Lamborghini',
+    series: 'LB834',
+    name: 'Aventador SVJ',
+    tag: 'NA V12 \u00B7 770 hp \u00B7 1525 kg',
+    info: SVJ_INFO,
+    attribution: '3D model: Sketchfab \u00B7 CC BY 4.0',
+    paint: 'black',
+    categorize: GENERIC_CATEGORIZE,
+  },
+];
+
+const THEMES = {
+  dark: {
+    bg:          'radial-gradient(140% 90% at 50% 28%, #161b22 0%, #0a0d11 50%, #04060a 100%)',
+    fg:          '#e6e9ee',
+    fgPri:       '#f3f5f8',
+    fgSec:       '#a3acb6',
+    fgMut:       '#7a8290',
+    accent:      '#d9b540',
+    cardBg:      'linear-gradient(180deg, rgba(20,24,30,.82), rgba(12,15,20,.82))',
+    cardBd:      'rgba(255,255,255,0.08)',
+    btnBg:       'rgba(255,255,255,.05)',
+    navBg:       'rgba(10,13,17,.55)',
+    sliderBg:    'rgba(10,13,17,.62)',
+    thumb:       '#e6e9ee',
+    trackBar:    'rgba(255,255,255,.16)',
+    thumbHalo:   'rgba(217,181,64,.28)',
+    chipAbg:     '#d9b540',
+    chipAfg:     '#1a1408',
+    chipAbd:     '#d9b540',
+    chipIbg:     'rgba(255,255,255,.035)',
+    chipIfg:     '#cdd2d8',
+    chipIbd:     'rgba(255,255,255,.1)',
+    dotOn:       '#d9b540',
+    dotOff:      'rgba(255,255,255,.18)',
+  },
+  light: {
+    bg:          'radial-gradient(140% 90% at 50% 24%, #f6f7f9 0%, #e7e9ee 60%, #cdd1d8 100%)',
+    fg:          '#1a1c20',
+    fgPri:       '#0c0e10',
+    fgSec:       '#41454c',
+    fgMut:       '#6a6e76',
+    accent:      '#c8102e',
+    cardBg:      'linear-gradient(180deg, rgba(255,255,255,.78), rgba(245,247,250,.78))',
+    cardBd:      'rgba(0,0,0,0.10)',
+    btnBg:       'rgba(0,0,0,.04)',
+    navBg:       'rgba(255,255,255,.62)',
+    sliderBg:    'rgba(255,255,255,.66)',
+    thumb:       '#0c0e10',
+    trackBar:    'rgba(0,0,0,.16)',
+    thumbHalo:   'rgba(200,16,46,.28)',
+    chipAbg:     '#c8102e',
+    chipAfg:     '#ffffff',
+    chipAbd:     '#c8102e',
+    chipIbg:     'rgba(0,0,0,.04)',
+    chipIfg:     '#191b1f',
+    chipIbd:     'rgba(0,0,0,.12)',
+    dotOn:       '#c8102e',
+    dotOff:      'rgba(0,0,0,.18)',
+  },
+};
+
+/* ===== COMPONENT ============================================== */
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const params = new URLSearchParams(window.location.search);
+    const reqIdx = parseInt(params.get('car') || '0', 10);
+    const startIdx = (Number.isFinite(reqIdx) && reqIdx >= 0 && reqIdx < CARS.length) ? reqIdx : 0;
+    this.state = {
+      carIdx: startIdx,
+      explode: 0,
+      selected: null,
+      loading: true,
+      progress: 0,
+      chatOpen: false,
+      chatBusy: false,
+      chatLog: [{ role: 'bp', text: 'Ask me to show a part, take the car apart, reset it, or switch cars.' }],
+    };
+    this.contRef = React.createRef();
+    this.chatInputRef = React.createRef();
+    this.chatLogRef = React.createRef();
+    this.carData = CARS.map(c => ({ ...c, loaded: false, root: null, parts: [] }));
+    this._catAmt = { wing:0, hood:0, doors:0, wheels:0, engine:0, exhaust:0, interior:0, body:0 };
+    this._slideT = 1;
+    this._slideDir = 0;
+    this._slideFrom = -1;
+    this._slideTo = 0;
+    this._slideDist = 8;
+    this._lastTickAt = 0;
+  }
+
+  componentDidUpdate() { this._dirty = true; }
+  componentDidMount() {
+    const ready = () => window.THREE && window.OrbitControls && window.RoomEnvironment && window.GLTFLoader;
+    const go = () => { if (this._init) return; this._init = true; this.init(); };
+    if (ready()) { go(); return; }
+    window.addEventListener('three-ready', () => { if (ready()) go(); });
+    this._poll = setInterval(() => { if (ready()) { clearInterval(this._poll); go(); } }, 120);
+    window.addEventListener('keydown', this._onKey = (e) => {
+      if (e.key === 'ArrowRight') this.switchCar(+1);
+      else if (e.key === 'ArrowLeft') this.switchCar(-1);
+    });
+  }
+
+  componentWillUnmount() {
+    cancelAnimationFrame(this._raf);
+    clearInterval(this._poll);
+    if (this._ro) this._ro.disconnect();
+    if (this._onKey) window.removeEventListener('keydown', this._onKey);
+    if (this.renderer) {
+      this.renderer.dispose();
+      try { this.renderer.forceContextLoss(); } catch (e) {}
+      if (this.renderer.domElement.parentNode) this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+    }
+  }
+
+  init() {
+    const THREE = window.THREE;
+    const container = this.contRef.current;
+    if (!container) return;
+    while (container.firstChild) container.removeChild(container.firstChild);
+
+    const W = container.clientWidth || 1200;
+    const H = container.clientHeight || 800;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(32, W / H, 0.05, 200);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
+    renderer.setSize(W, H);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    renderer.domElement.style.display = 'block';
+    container.appendChild(renderer.domElement);
+    this.renderer = renderer; this.scene = scene; this.camera = camera;
+
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new window.RoomEnvironment(), 0.04).texture;
+
+    scene.add(new THREE.HemisphereLight(0xcfe0f5, 0x0a0d12, 0.35));
+    const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(5, 10, 6); scene.add(key);
+    const rim = new THREE.DirectionalLight(0xa3c5ff, 1.0); rim.position.set(-6, 4, -5); scene.add(rim);
+    const fill = new THREE.DirectionalLight(0xffffff, 0.45); fill.position.set(0, 2, 8); scene.add(fill);
+
+    const controls = new window.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.08;
+    controls.enablePan = false;
+    controls.autoRotate = false;
+    controls.addEventListener('change', () => { this._dirty = true; });
+    this.controls = controls;
+
+    /* contact shadow */
+    const sc = document.createElement('canvas'); sc.width = sc.height = 512;
+    const sctx = sc.getContext('2d');
+    const sg = sctx.createRadialGradient(256, 256, 0, 256, 256, 256);
+    sg.addColorStop(0, 'rgba(0,0,0,0.55)');
+    sg.addColorStop(0.55, 'rgba(0,0,0,0.16)');
+    sg.addColorStop(1, 'rgba(0,0,0,0)');
+    sctx.fillStyle = sg; sctx.fillRect(0, 0, 512, 512);
+    const sTex = new THREE.CanvasTexture(sc);
+    this._shadowMat = new THREE.MeshBasicMaterial({ map: sTex, transparent: true, depthWrite: false });
+    this._shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this._shadowMat);
+    this._shadow.rotation.x = -Math.PI / 2;
+    scene.add(this._shadow);
+
+    /* raycast clicks */
+    const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+    let down = null;
+    const setPtr = (e) => {
+      const r = renderer.domElement.getBoundingClientRect();
+      ptr.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+      ptr.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+    };
+    renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+    renderer.domElement.addEventListener('pointerup', e => {
+      if (!down) return;
+      const moved = Math.hypot(e.clientX - down[0], e.clientY - down[1]);
+      down = null;
+      if (moved > 6) return;
+      const active = this.carData[this.state.carIdx];
+      if (!active.loaded || !active.parts.length) return;
+      setPtr(e);
+      ray.setFromCamera(ptr, camera);
+      const meshes = [];
+      active.parts.forEach(p => p.meshes.forEach(m => meshes.push(m)));
+      const hits = ray.intersectObjects(meshes, false);
+      if (!hits.length) { this.setState({ selected: null }); return; }
+      const hitMesh = hits[0].object;
+      const part = active.parts.find(p => p.meshes.indexOf(hitMesh) !== -1);
+      if (!part || part.cat === 'body') { this.setState({ selected: null }); return; }
+      this.setState(s => ({ selected: s.selected === part.cat ? null : part.cat }));
+    });
+
+    const ro = new ResizeObserver(() => {
+      const w = container.clientWidth, h = container.clientHeight;
+      if (w && h) { renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+    });
+    ro.observe(container); this._ro = ro;
+
+    /* Load the requested car first; then the rest in the background. */
+    const startIdx = this.state.carIdx;
+    this.loadCar(startIdx).then(async () => {
+      this.fitTo(startIdx, false);
+      this.setState({ loading: false, progress: 1 });
+      for (let i = 0; i < this.carData.length; i++) {
+        if (i === startIdx) continue;
+        try { await this.loadCar(i); } catch (e) {}
+      }
+    });
+
+    this._dirty = true;
+    const tick = () => {
+      this._raf = requestAnimationFrame(tick);
+      const now = performance.now();
+      const dt = this._lastTickAt ? Math.min(0.06, (now - this._lastTickAt) / 1000) : 0.016;
+      this._lastTickAt = now;
+      const moving = this.tickExplode() | (this._slideT < 1);
+      this.tickSlide(dt);
+      const camChanged = controls.update();
+      if (camChanged || moving || this._dirty) {
+        renderer.render(scene, camera);
+        this._dirty = false;
+      }
+    };
+    tick();
+
+    window.__app = this; // dev hook
+  }
+
+  loadCar(idx) {
+    const car = this.carData[idx];
+    if (car.partsManifest) return this.loadCarMultipart(idx);
+    return new Promise((res, rej) => {
+      const loader = new window.GLTFLoader();
+      loader.load(
+        resolveAsset(car.glb),
+        (gltf) => { car.gltf = gltf; try { this.processCar(idx); res(); } catch (e) { console.error(e); rej(e); } },
+        (xhr) => {
+          if (idx === this.state.carIdx && xhr.total > 0) this.setState({ progress: xhr.loaded / xhr.total });
+        },
+        (err) => { console.error('Failed to load', car.glb, err); rej(err); }
+      );
+    });
+  }
+
+  loadCarMultipart(idx) {
+    const THREE = window.THREE;
+    const car = this.carData[idx];
+    const manifest = car.partsManifest;
+    const total = manifest.length;
+    let loaded = 0;
+    const loader = new window.GLTFLoader();
+    return Promise.all(manifest.map((partName, i) =>
+      new Promise((r, rj) => {
+        loader.load(
+          resolveAsset(car.partsBase + partName + '.glb'),
+          (gltf) => { loaded++; if (idx === this.state.carIdx) this.setState({ progress: loaded / total }); r({ name: partName, scene: gltf.scene }); },
+          null,
+          (err) => { console.warn('skipped part', partName, err); loaded++; r(null); }
+        );
+      })
+    )).then(parts => {
+      const combined = new THREE.Group();
+      parts.filter(Boolean).forEach(({ name, scene }) => { scene.name = name; combined.add(scene); });
+      car.gltf = { scene: combined };
+      this.processCar(idx);
+    });
+  }
+
+  processCar(idx) {
+    const THREE = window.THREE;
+    const car = this.carData[idx];
+    const root = car.gltf.scene;
+    /* Descend to the node with many children (the real content root) */
+    let rootNode = root;
+    while (rootNode.children.length === 1) rootNode = rootNode.children[0];
+
+    root.updateMatrixWorld(true);
+    const wb = new THREE.Box3().setFromObject(rootNode);
+    const wc = wb.getCenter(new THREE.Vector3());
+    /* Recenter + sit on ground */
+    root.position.x -= wc.x;
+    root.position.z -= wc.z;
+    root.position.y -= wb.min.y;
+    root.updateMatrixWorld(true);
+
+    const wb2 = new THREE.Box3().setFromObject(rootNode);
+    const sz2 = wb2.getSize(new THREE.Vector3());
+    const lengthAxis = sz2.x >= sz2.z ? 'x' : 'z';
+
+    car.root = root;
+    car.rootNode = rootNode;
+    car.size = sz2.clone();
+    car.lengthAxis = lengthAxis;
+    car.fitDistance = Math.max(sz2.x, sz2.z) * 2.1;
+
+    /* Build parts list */
+    car.parts = [];
+    const ccWorld = new THREE.Vector3(0, (wb2.min.y + wb2.max.y) / 2, 0);
+    const half = sz2.clone().multiplyScalar(0.5);
+
+    const partNodes = rootNode.children.slice();
+    partNodes.forEach((child) => {
+      let cat = car.categorize(child.name);
+      const meshes = [];
+      child.traverse(o => { if (o.isMesh) meshes.push(o); });
+      const pbox = new THREE.Box3().setFromObject(child);
+      const pc = pbox.getCenter(new THREE.Vector3());
+
+      /* Apply heuristic if unresolved */
+      if (cat === 'maybe' && car.heuristic) {
+        const relUp = (pc.y - wb2.min.y) / sz2.y;
+        const relFwd = (pc[lengthAxis] - ccWorld[lengthAxis]) / (sz2[lengthAxis] / 2);
+        cat = car.heuristic(relUp, relFwd);
+      }
+      if (cat === 'maybe') cat = 'body';
+
+      const worldDir = pc.clone().sub(ccWorld);
+      let v = null;
+      if (car.biasFor) v = car.biasFor(cat, worldDir, sz2, lengthAxis);
+      if (!v) v = this.computeExplodeBiasWorld(cat, worldDir, sz2, lengthAxis);
+      const tmpM3 = new THREE.Matrix3().setFromMatrix4(child.parent.matrixWorld).invert();
+      const localVec = v.clone().applyMatrix3(tmpM3);
+
+      car.parts.push({
+        name: child.name, cat: cat,
+        obj: child,
+        base: child.position.clone(),
+        meshes,
+        explodeVec: localVec,
+      });
+    });
+
+    /* Add to scene, hide if not active */
+    this.scene.add(root);
+    root.visible = (idx === this.state.carIdx);
+    car.loaded = true;
+    this.forceUpdate();
+  }
+
+  computeExplodeBiasWorld(cat, worldDir, size, lengthAxis) {
+    const THREE = window.THREE;
+    const v = new THREE.Vector3();
+    const len = (lengthAxis === 'x' ? size.x : size.z);
+    const wid = (lengthAxis === 'x' ? size.z : size.x);
+    const h = size.y;
+    const fwdSign = (lengthAxis === 'x' ? Math.sign(worldDir.x) : Math.sign(worldDir.z)) || 1;
+    const sideSign = (lengthAxis === 'x' ? Math.sign(worldDir.z) : Math.sign(worldDir.x)) || 1;
+    const setLen = (mag) => { if (lengthAxis === 'x') v.x += mag; else v.z += mag; };
+    const setSide = (mag) => { if (lengthAxis === 'x') v.z += mag; else v.x += mag; };
+    const setUp = (mag) => { v.y += mag; };
+
+    /* Radial outward vector from car centre, scaled so the part travels
+       roughly one-half the car's diagonal at full explode. Used for the
+       generic 'body' case (so models without a clean part graph still
+       explode in 3D) and as a small additive on top of the named-category
+       biases (so motion never reads as a single-axis slide). */
+    const radial = new THREE.Vector3(worldDir.x, worldDir.y, worldDir.z);
+    /* Normalize against the car's half-extents so a part near the front
+       gets a unit-length forward push, near the roof a unit-length up
+       push, etc. — independent of how big the car is. */
+    if (Math.abs(radial.x) > 1e-6) radial.x /= (size.x * 0.5);
+    if (Math.abs(radial.y) > 1e-6) radial.y /= (size.y * 0.5);
+    if (Math.abs(radial.z) > 1e-6) radial.z /= (size.z * 0.5);
+    if (radial.lengthSq() < 1e-6) radial.set(0, 1, 0);
+    radial.normalize();
+    const diag = Math.sqrt(size.x*size.x + size.y*size.y + size.z*size.z);
+    const radialMag = diag * 0.32;
+
+    switch (cat) {
+      case 'wing':     setUp(h * 1.1); v.addScaledVector(radial, radialMag * 0.25); break;
+      case 'hood':     setUp(h * 0.5); setLen(fwdSign * len * 0.35); v.addScaledVector(radial, radialMag * 0.25); break;
+      case 'doors':    setSide(sideSign * wid * 0.7); v.addScaledVector(radial, radialMag * 0.25); break;
+      case 'wheels':   setSide(sideSign * wid * 0.55); setLen(fwdSign * len * 0.05); v.addScaledVector(radial, radialMag * 0.2); break;
+      case 'engine':   setUp(-h * 0.55); setLen(fwdSign * len * 0.30); v.addScaledVector(radial, radialMag * 0.25); break;
+      case 'exhaust':  setUp(-h * 0.25); setLen(fwdSign * len * 0.55); v.addScaledVector(radial, radialMag * 0.25); break;
+      case 'interior': setUp(h * 1.4); break;
+      case 'body':     v.addScaledVector(radial, radialMag); break;
+    }
+    return v;
+  }
+
+  fitTo(idx, animated) {
+    const car = this.carData[idx];
+    if (!car.loaded) return;
+    const sz = car.size, fitDist = car.fitDistance, h = sz.y;
+    if (!animated) {
+      this.camera.position.set(fitDist * 0.85, h * 1.05, fitDist);
+      this.controls.target.set(0, h * 0.42, 0);
+    }
+    this.controls.minDistance = fitDist * 0.6;
+    this.controls.maxDistance = fitDist * 2.0;
+    this.controls.minPolarAngle = 0.4;
+    this.controls.maxPolarAngle = Math.PI / 2 - 0.02;
+    this.controls.saveState();
+    /* Shadow scale */
+    const shadowSize = Math.max(sz.x, sz.z) * 1.6;
+    this._shadow.scale.set(shadowSize, shadowSize, 1);
+    this._shadow.position.set(0, 0.005, 0);
+    /* Slide distance large enough to clear screen */
+    this._slideDist = Math.max(sz.x, sz.z) * 2.4;
+  }
+
+  switchCar(dir) {
+    if (this._slideT < 1) return; /* already animating */
+    const cur = this.state.carIdx;
+    const next = (cur + dir + this.carData.length) % this.carData.length;
+    if (next === cur) return;
+
+    const ensure = this.carData[next].loaded
+      ? Promise.resolve()
+      : this.loadCar(next);
+
+    ensure.then(() => {
+      this._slideFrom = cur;
+      this._slideTo = next;
+      this._slideDir = dir;
+      this._slideT = 0;
+      this.carData[next].root.visible = true;
+      /* Position the incoming car off to its starting side */
+      this.carData[next].root.position.x = -dir * this._slideDist;
+      this.setState({ carIdx: next, explode: 0, selected: null });
+      /* Reset catAmts so previous explode state doesn't carry */
+      Object.keys(this._catAmt).forEach(k => this._catAmt[k] = 0);
+      this.fitTo(next, false);
+    });
+  }
+
+  tickSlide(dt) {
+    if (this._slideT >= 1) return;
+    this._slideT = Math.min(1, this._slideT + dt / 0.55); /* 550ms */
+    const t = this._slideT;
+    const ease = 1 - Math.pow(1 - t, 3);
+    const d = this._slideDist;
+    const dir = this._slideDir;
+    const fromCar = this.carData[this._slideFrom];
+    const toCar = this.carData[this._slideTo];
+    if (fromCar && fromCar.root) fromCar.root.position.x = ease * d * dir;
+    if (toCar && toCar.root) toCar.root.position.x = -(1 - ease) * d * dir;
+    if (this._slideT >= 1) {
+      if (fromCar && fromCar.root) {
+        fromCar.root.position.x = 0;
+        fromCar.root.visible = false;
+      }
+      if (toCar && toCar.root) toCar.root.position.x = 0;
+    }
+  }
+
+  tickExplode() {
+    const active = this.carData[this.state.carIdx];
+    if (!active || !active.loaded || !active.parts.length) return false;
+    const m = this.state.explode, sel = this.state.selected;
+    const k = 0.14;
+    let stillMoving = false;
+    Object.keys(this._catAmt).forEach(cat => {
+      let t;
+      if (sel === null) t = m;
+      else if (sel === cat) t = 1;
+      else t = 0;
+      const next = this._catAmt[cat] + (t - this._catAmt[cat]) * k;
+      if (Math.abs(t - next) > 0.0005) stillMoving = true;
+      this._catAmt[cat] = next;
+    });
+
+    const bodyDim = sel ? (sel === 'engine' || sel === 'interior' || sel === 'exhaust' ? 0.20 : 0.42) : 1;
+    const partOpa = (cat) => (sel && sel !== cat) ? bodyDim : 1;
+
+    active.parts.forEach(p => {
+      const a = this._catAmt[p.cat] || 0;
+      p.obj.position.copy(p.base).addScaledVector(p.explodeVec, a);
+      const op = partOpa(p.cat);
+      if (p._opa !== op) {
+        p._opa = op;
+        p.meshes.forEach(m => {
+          if (!m.userData._matCloned) {
+            if (Array.isArray(m.material)) m.material = m.material.map(mm => mm.clone());
+            else m.material = m.material.clone();
+            m.userData._matCloned = true;
+          }
+          const apply = (mat) => {
+            if (mat.userData._wasTransparent === undefined) mat.userData._wasTransparent = mat.transparent;
+            mat.transparent = op < 1 ? true : mat.userData._wasTransparent;
+            mat.opacity = op;
+          };
+          if (Array.isArray(m.material)) m.material.forEach(apply);
+          else apply(m.material);
+        });
+      }
+    });
+    return stillMoving;
+  }
+
+  /* === AI assistant === */
+  toggleChat(open) {
+    this.setState({ chatOpen: open }, () => {
+      if (open && this.chatInputRef.current) this.chatInputRef.current.focus();
+    });
+  }
+  pushChat(role, text) {
+    this.setState(s => ({ chatLog: [...s.chatLog, { role, text }] }), () => {
+      const el = this.chatLogRef.current; if (el) el.scrollTop = el.scrollHeight;
+    });
+  }
+  async sendChat() {
+    const el = this.chatInputRef.current; if (!el) return;
+    const text = el.value.trim();
+    if (!text || this.state.chatBusy) return;
+    el.value = '';
+    this.pushChat('user', text);
+    this.setState({ chatBusy: true });
+    try {
+      if (!window.claude || typeof window.claude.complete !== 'function') throw new Error('Assistant unavailable in this context');
+      const reply = await this.askAI(text);
+      if (reply.speech) this.pushChat('bp', reply.speech);
+      this.runChatActions(reply.actions || []);
+    } catch (err) {
+      this.pushChat('bp', '\u26a0\ufe0f ' + err.message);
+    }
+    this.setState({ chatBusy: false }, () => {
+      const i = this.chatInputRef.current; if (i) i.focus();
+    });
+  }
+  async askAI(text) {
+    const car = this.carData[this.state.carIdx];
+    const partList = Object.keys(car.info).map(k => `${k} \u2014 ${car.info[k].name}: ${car.info[k].desc}`).join('\n');
+    const carsList = this.carData.map((c, i) => `${i}: ${c.maker} ${c.name}`).join('; ');
+    const prompt = `You are the AI assistant inside a 3D car-anatomy explorer. The car on screen is the ${car.maker} ${car.name} (${car.tag}).
+You DRIVE the live 3D scene by emitting actions. Reply with ONLY a single JSON object, no prose or markdown outside it:
+{"speech":"1-2 short warm sentences","actions":[{"tool":"<name>","args":{...}}]}
+
+Selectable part keys (use these EXACT strings): wing, hood, doors, wheels, engine, exhaust, interior.
+Verified part info for THIS car (never state a number that isn't here):
+${partList}
+
+Other cars available, switch by index: ${carsList}
+
+Tools:
+- select_part({part})   // frame a part and show its info card
+- explode({pct})        // 0-100, pull the whole car apart
+- reset({})             // reassemble and deselect
+- switch_car({index})   // change the car on screen
+
+Map intent to actions: "show me the engine" -> select_part(engine); "take it apart" -> explode(100); "put it back together" -> reset; "show the Ferrari" -> switch_car(its index). Keep speech short; the card shows the detail. Act, don't ask clarifying questions.
+User: ${text}
+Reply now with ONLY the JSON object.`;
+    const raw = await window.claude.complete(prompt);
+    return this.parseAI(raw);
+  }
+  parseAI(raw) {
+    if (!raw) return { speech: '', actions: [] };
+    let s = String(raw).trim();
+    const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fence) s = fence[1].trim();
+    const a = s.indexOf('{'), b = s.lastIndexOf('}');
+    if (a >= 0 && b > a) s = s.slice(a, b + 1);
+    try { return JSON.parse(s); }
+    catch (e) { return { speech: String(raw).slice(0, 200), actions: [] }; }
+  }
+  runChatActions(actions) {
+    const PARTS = ['wing', 'hood', 'doors', 'wheels', 'engine', 'exhaust', 'interior'];
+    (actions || []).forEach(act => {
+      const args = act.args || {};
+      if (act.tool === 'select_part' && PARTS.includes(args.part)) {
+        this.setState({ selected: args.part });
+      } else if (act.tool === 'explode') {
+        const v = Math.max(0, Math.min(100, Number(args.pct) || 0)) / 100;
+        this.setState({ explode: v, selected: null });
+      } else if (act.tool === 'reset') {
+        this.setState({ selected: null, explode: 0 });
+      } else if (act.tool === 'switch_car') {
+        const idx = Number(args.index);
+        if (Number.isFinite(idx) && idx >= 0 && idx < this.carData.length) this.switchCarTo(idx);
+      }
+    });
+  }
+  switchCarTo(next) {
+    if (this._slideT < 1) return;
+    const cur = this.state.carIdx;
+    if (next === cur) return;
+    const dir = next > cur ? 1 : -1;
+    const ensure = this.carData[next].loaded ? Promise.resolve() : this.loadCar(next);
+    ensure.then(() => {
+      this._slideFrom = cur;
+      this._slideTo = next;
+      this._slideDir = dir;
+      this._slideT = 0;
+      this.carData[next].root.visible = true;
+      this.carData[next].root.position.x = -dir * this._slideDist;
+      this.setState({ carIdx: next, explode: 0, selected: null });
+      Object.keys(this._catAmt).forEach(k => this._catAmt[k] = 0);
+      this.fitTo(next, false);
+    });
+  }
+
+  /* === Public actions === */
+  onSlider(e) {
+    const v = +e.target.value / 100;
+    this.setState({ explode: v, selected: null });
+  }
+  selectPart(p) { this.setState(s => ({ selected: s.selected === p ? null : p })); }
+  reset() { this.setState({ selected: null }); }
+
+  /* === Render values === */
+  renderVals() {
+    const idx = this.state.carIdx;
+    const car = this.carData[idx];
+    const isPaintBlack = car.paint === 'black';
+    const t = isPaintBlack ? THEMES.light : THEMES.dark;
+    const m = this.state.explode;
+    const sel = this.state.selected;
+    const cur = sel ? car.info[sel] : null;
+    const chip = (key) => sel === key
+      ? `background-color:${t.chipAbg};color:${t.chipAfg};border-color:${t.chipAbd};`
+      : `background-color:${t.chipIbg};color:${t.chipIfg};border-color:${t.chipIbd};`;
+    return {
+      contRef: this.contRef,
+      loading: this.state.loading,
+      loadingLabel: 'Loading model',
+      loadingTitle: car.maker + ' ' + car.name,
+      loadingSub: car.sizeMB,
+      progressPct: Math.round(this.state.progress * 100),
+      pct: Math.round(m * 100),
+      hasSel: !!cur, noSel: !cur,
+      selName: cur ? cur.name : '',
+      selDesc: cur ? cur.desc : '',
+      onSlider: (e) => this.onSlider(e),
+      onReset: () => this.reset(),
+      onPrev: () => this.switchCar(-1),
+      onNext: () => this.switchCar(+1),
+      onSelectEngine:   () => {
+        /* Only the Porsche GT3 RS (idx 0) drills down to the engine teardown.
+           Every other car treats the engine chip as a normal part selector. */
+        if (this.state.carIdx === 0) {
+          window.location.href = './Bugatti%20W16%20Engine%20Teardown.html';
+        } else {
+          this.selectPart('engine');
+        }
+      },
+      onSelectWing:     () => this.selectPart('wing'),
+      onSelectHood:     () => this.selectPart('hood'),
+      onSelectDoors:    () => this.selectPart('doors'),
+      onSelectWheels:   () => this.selectPart('wheels'),
+      onSelectExhaust:  () => this.selectPart('exhaust'),
+      onSelectInterior: () => this.selectPart('interior'),
+      chipWingStyle:     chip('wing'),
+      chipHoodStyle:     chip('hood'),
+      chipDoorsStyle:    chip('doors'),
+      chipWheelsStyle:   chip('wheels'),
+      chipEngineStyle:   chip('engine'),
+      chipExhaustStyle:  chip('exhaust'),
+      chipInteriorStyle: chip('interior'),
+      carMaker: car.maker,
+      carSeries: car.series,
+      carName: car.name,
+      carTag: car.tag,
+      pagerLabel: (idx + 1) + ' \u00B7 ' + this.carData.length,
+      dots: this.carData.map((_, i) => ({ bg: i === idx ? t.dotOn : t.dotOff })),
+      attribution: car.attribution,
+      chatOpen: this.state.chatOpen,
+      chatClosed: !this.state.chatOpen,
+      chatSendLabel: this.state.chatBusy ? '\u2026' : 'Ask',
+      chatLogRef: this.chatLogRef,
+      chatInputRef: this.chatInputRef,
+      onOrbClick: () => this.toggleChat(true),
+      onChatClose: () => this.toggleChat(false),
+      onChatSend: () => this.sendChat(),
+      onChatKey: (e) => { if (e.key === 'Enter') this.sendChat(); },
+      chatLog: this.state.chatLog.map(msg => ({
+        text: msg.text,
+        style: msg.role === 'user'
+          ? 'align-self:flex-end;max-width:85%;background:rgba(217,181,64,.16);border:1px solid rgba(217,181,64,.28);color:#f3f5f8;font:400 13px/1.5 Manrope;padding:9px 12px;border-radius:12px;'
+          : 'align-self:flex-start;max-width:90%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#cdd2d8;font:400 13px/1.5 Manrope;padding:9px 12px;border-radius:12px;',
+      })),
+      tBg: t.bg, tFg: t.fg, tFgPri: t.fgPri, tFgSec: t.fgSec, tFgMut: t.fgMut,
+      tAccent: t.accent, tCardBg: t.cardBg, tCardBd: t.cardBd,
+      tBtnBg: t.btnBg, tNavBg: t.navBg, tSliderBg: t.sliderBg,
+      tThumb: t.thumb, tTrackBar: t.trackBar, tThumbHalo: t.thumbHalo,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,6 +1,12 @@
 import * as THREE from "three";
-import { GLTFLoader } from "../vendor/loaders/GLTFLoader.js";
-import { assetUrl } from "./config.js";
+import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
+
+function landingAsset(path) {
+  if (location.hostname.endsWith(".vercel.app")) {
+    return "https://cdn.jsdelivr.net/gh/ShadowEsu/Blueprint@main/" + path.replace(/^\.\//, "");
+  }
+  return path;
+}
 
 const sections = [...document.querySelectorAll(".page-section")];
 const dots = [...document.querySelectorAll(".dot")];
@@ -63,7 +69,7 @@ let car = null;
 const loader = new GLTFLoader();
 
 loader.load(
-  assetUrl("./assets/blueprint-showroom-car.glb"),
+  landingAsset("./assets/blueprint-showroom-car.glb"),
   (gltf) => {
     car = gltf.scene;
     const box = new THREE.Box3().setFromObject(car);
