@@ -4,7 +4,7 @@
   "outputDirectory": ".",
   "functions": {
     "api/agent.js": {
-      "maxDuration": 30
+      "maxDuration": 10
     }
   },
   "headers": [

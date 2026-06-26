@@ -232,17 +232,18 @@ async function runAgent(body) {
   const actions = [];
   const data = {};
 
-  for (let step = 0; step < 3; step++) {
+  for (let step = 0; step < 2; step++) {
     const completion = await llm.chat.completions.create({
       model,
-      temperature: 0.4,
+      temperature: 0.3,
       messages,
       tools: TOOLS,
+      tool_choice: step === 0 ? "auto" : "none",
     });
 
     const choice = completion.choices[0]?.message;
     if (!choice?.tool_calls?.length) {
-      return { speech: choice?.content || "", actions, data };
+      return { speech: choice?.content || "Done.", actions, data };
     }
 
     messages.push(choice);
@@ -263,8 +264,11 @@ async function runAgent(body) {
     }
   }
 
-  const closing = await llm.chat.completions.create({ model, messages: [...messages, { role: "user", content: "Reply in one short sentence." }] });
-  return { speech: closing.choices[0]?.message?.content || "Done.", actions, data };
+  const last = messages[messages.length - 1];
+  if (last?.role === "assistant" && last.content) {
+    return { speech: last.content, actions, data };
+  }
+  return { speech: "Done.", actions, data };
 }
 
 export default async function handler(req, res) {
