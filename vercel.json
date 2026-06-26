@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "buildCommand": "npm install",
+  "outputDirectory": ".",
   "functions": {
     "api/agent.js": {
       "maxDuration": 30
