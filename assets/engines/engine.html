@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engine Teardown</title>
+<style>
+  :root{--bg:#0a0b0e;--panel:#13151a;--line:#262a31;--txt:#eef0f4;--muted:#9aa0ab;--accent:#e10600;}
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
+  #app{display:flex;height:100vh}
+  #stage{flex:1;position:relative}
+  canvas{display:block}
+  #top{position:absolute;top:0;left:0;right:0;padding:14px 18px;display:flex;align-items:center;gap:14px;pointer-events:none}
+  #top a{color:var(--muted);text-decoration:none;font-size:13px;pointer-events:auto}
+  #top h1{margin:0;font-size:16px;font-weight:600}
+  #ctrls{position:absolute;left:18px;bottom:18px;background:rgba(19,21,26,.82);border:1px solid var(--line);border-radius:12px;padding:12px 14px;backdrop-filter:blur(6px);width:280px}
+  #ctrls label{font-size:12px;color:var(--muted)}
+  #ctrls input[type=range]{width:100%}
+  .btn{background:#1d2026;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:12px;cursor:pointer;margin-top:8px}
+  .btn:hover{border-color:var(--accent)}
+  #side{width:300px;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column}
+  #side h2{margin:0;padding:16px 16px 4px;font-size:14px}
+  #side .sub{padding:0 16px 12px;color:var(--muted);font-size:12px;border-bottom:1px solid var(--line)}
+  #list{overflow:auto;flex:1}
+  .item{padding:10px 16px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px;display:flex;justify-content:space-between;gap:8px}
+  .item:hover{background:#1b1e24}
+  .item.active{background:#22262e;border-left:3px solid var(--accent)}
+  .item .t{color:var(--muted);font-size:11px}
+  #info{padding:12px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);min-height:64px}
+  #info b{color:var(--txt)}
+  #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <div id="top">
+      <a href="index.html">&larr; cars</a>
+      <h1 id="title">Engine</h1>
+    </div>
+    <div id="loading">Loading engine…</div>
+    <div id="ctrls">
+      <label>Explode <span id="exv">0%</span></label>
+      <input id="explode" type="range" min="0" max="100" value="0">
+      <div>
+        <button class="btn" id="spin">Spin: on</button>
+        <button class="btn" id="reset">Reset view</button>
+        <button class="btn" id="iso">Show all</button>
+      </div>
+    </div>
+  </div>
+  <div id="side">
+    <h2 id="carname">Engine</h2>
+    <div class="sub" id="carsub">Click a part to isolate it</div>
+    <div id="list"></div>
+    <div id="info">Hover or click a part to inspect it.</div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const car = new URLSearchParams(location.search).get('car') || 'gt3rs';
+const cfg = `teardown_${car}.json`;
+
+const stage=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(stage.clientWidth,stage.clientHeight);
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.15;
+stage.appendChild(renderer.domElement);
+
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x0a0b0e);
+const pmrem=new THREE.PMREMGenerator(renderer);
+scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
+
+const camera=new THREE.PerspectiveCamera(38,stage.clientWidth/stage.clientHeight,0.01,100);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.autoRotate=true; controls.autoRotateSpeed=0.9;
+
+const key=new THREE.DirectionalLight(0xffffff,2.4); key.position.set(2,3,2); scene.add(key);
+const fill=new THREE.DirectionalLight(0x88aaff,0.7); fill.position.set(-3,1,-2); scene.add(fill);
+scene.add(new THREE.AmbientLight(0xffffff,0.25));
+
+const root=new THREE.Group(); scene.add(root);
+const loader=new GLTFLoader();
+let parts=[], center=new THREE.Vector3(), radius=1, selected=null;
+const baseMat=()=>new THREE.MeshStandardMaterial({color:0x9fa6b0,metalness:0.92,roughness:0.34});
+const dimMat =new THREE.MeshStandardMaterial({color:0x32363d,metalness:0.6,roughness:0.7,transparent:true,opacity:0.18});
+const selMat =new THREE.MeshStandardMaterial({color:0xff5a4d,metalness:0.7,roughness:0.3,emissive:0x551410,emissiveIntensity:0.5});
+
+fetch(cfg).then(r=>r.json()).then(async data=>{
+  document.getElementById('title').textContent=data.car+' — Engine';
+  document.getElementById('carname').textContent=data.car;
+  document.getElementById('carsub').textContent=`${data.parts.length} sub-parts · click to isolate`;
+  const box=new THREE.Box3();
+  for(const p of data.parts){
+    const g=await loader.loadAsync(p.file);
+    const mesh=new THREE.Group(); mesh.name=p.label;
+    g.scene.traverse(o=>{ if(o.isMesh){ o.material=baseMat(); o.userData.part=p.label; mesh.add(o.clone()); }});
+    const c=new THREE.Vector3(); new THREE.Box3().setFromObject(mesh).getCenter(c);
+    mesh.userData={meta:p,home:mesh.position.clone(),dir:c.clone()};
+    root.add(mesh); parts.push(mesh); box.expandByObject(mesh);
+  }
+  box.getCenter(center); radius=box.getSize(new THREE.Vector3()).length()/2;
+  // recompute explode directions from engine center
+  parts.forEach(m=>{ const c=new THREE.Vector3(); new THREE.Box3().setFromObject(m).getCenter(c);
+     m.userData.dir=c.sub(center).normalize(); });
+  root.position.sub(center); // center the model at origin
+  frameAll();
+  buildList(data.parts);
+  document.getElementById('loading').style.display='none';
+  animate();
+}).catch(e=>{document.getElementById('loading').textContent='Could not load parts — open via a local server or your design tool preview (file:// blocks loading). '+e;});
+
+function frameAll(){
+  controls.target.set(0,0,0);
+  const d=radius/Math.sin(THREE.MathUtils.degToRad(camera.fov/2))*1.05;
+  camera.position.set(d*0.55,d*0.35,d*0.85); camera.near=radius/100; camera.far=radius*40; camera.updateProjectionMatrix();
+}
+function buildList(ps){
+  const list=document.getElementById('list');
+  ps.forEach((p,i)=>{
+    const el=document.createElement('div'); el.className='item'; el.dataset.i=i;
+    el.innerHTML=`<span>${p.label}</span><span class="t">${p.tris} tris</span>`;
+    el.onclick=()=>select(i); list.appendChild(el);
+  });
+}
+function select(i){
+  selected=i;
+  parts.forEach((m,j)=>{ m.traverse(o=>{ if(o.isMesh) o.material = (i===null||j===i)?baseMat():dimMat; }); });
+  if(i!==null){ parts[i].traverse(o=>{if(o.isMesh)o.material=selMat;});
+    const p=parts[i].userData.meta;
+    document.getElementById('info').innerHTML=`<b>${p.label}</b><br>${p.tris} triangles · ${p.islands} geometry islands<br><span style="color:#caa23a">Region segment of the engine block (not an anatomically-named component).</span>`;
+  } else { document.getElementById('info').textContent='Showing all parts.'; }
+  document.querySelectorAll('.item').forEach(e=>e.classList.toggle('active',+e.dataset.i===i));
+}
+// raycast picking
+const ray=new THREE.Raycaster(), mouse=new THREE.Vector2();
+renderer.domElement.addEventListener('pointerdown',e=>{
+  const r=renderer.domElement.getBoundingClientRect();
+  mouse.x=((e.clientX-r.left)/r.width)*2-1; mouse.y=-((e.clientY-r.top)/r.height)*2+1;
+  ray.setFromCamera(mouse,camera); const hit=ray.intersectObjects(root.children,true)[0];
+  if(hit){ let o=hit.object; while(o.parent&&!parts.includes(o)) o=o.parent;
+    const i=parts.indexOf(o); if(i>=0) select(i); }
+});
+// explode
+const ex=document.getElementById('explode');
+ex.oninput=()=>{ const t=ex.value/100; document.getElementById('exv').textContent=ex.value+'%';
+  parts.forEach(m=>{ m.position.copy(m.userData.dir).multiplyScalar(t*radius*1.4); }); };
+document.getElementById('spin').onclick=e=>{controls.autoRotate=!controls.autoRotate;e.target.textContent='Spin: '+(controls.autoRotate?'on':'off');};
+document.getElementById('reset').onclick=frameAll;
+document.getElementById('iso').onclick=()=>select(null);
+addEventListener('resize',()=>{camera.aspect=stage.clientWidth/stage.clientHeight;camera.updateProjectionMatrix();renderer.setSize(stage.clientWidth,stage.clientHeight);});
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}
+</script>
+</body>
+</html>

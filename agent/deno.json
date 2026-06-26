@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "openai": "npm:openai@4",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2"
+  },
+  "tasks": {
+    "check": "deno check supabase/functions/agent/index.ts",
+    "serve": "deno run --allow-net --allow-env --env-file supabase/functions/agent/index.ts"
+  }
+}

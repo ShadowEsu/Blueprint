@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hypercar Teardown</title>
+<style>
+  :root{--bg:#0b0c0f;--card:#16181d;--line:#262a31;--txt:#eef0f4;--muted:#9aa0ab;--accent:#e10600;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  header{padding:34px 36px 8px}
+  header h1{margin:0;font-size:24px;letter-spacing:.4px}
+  header p{margin:8px 0 0;color:var(--muted);font-size:14px;max-width:720px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;padding:26px 36px 60px}
+  .car{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-decoration:none;color:inherit;transition:.15s;display:block}
+  .car:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .car .thumb{height:180px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#23262d,#0c0d10);font-size:46px}
+  .car h2{margin:0;padding:14px 16px 2px;font-size:17px}
+  .car p{margin:0;padding:0 16px 16px;color:var(--muted);font-size:13px}
+  .tag{display:inline-block;margin:0 16px 14px;font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--line);color:var(--muted)}
+  .tag.ok{color:#7dd39b;border-color:#2f5a3f}.tag.lim{color:#caa23a;border-color:#5a4f2a}
+</style>
+</head>
+<body>
+<header>
+  <h1>Hypercar Teardown</h1>
+  <p>Pick a car, then open its engine to break it down part by part. Click a part to isolate it; use the slider to explode the assembly.</p>
+</header>
+<div class="grid">
+  <a class="car" href="engine.html?car=gt3rs">
+    <div class="thumb">⚙️</div>
+    <h2>Porsche 911 GT3 RS</h2>
+    <p>Flat-six engine — full teardown (14 regional sub-parts from 407 solids).</p>
+    <span class="tag ok">engine teardown ready</span>
+  </a>
+  <a class="car" href="engine.html?car=tourbillon">
+    <div class="thumb">⚙️</div>
+    <h2>Bugatti Tourbillon</h2>
+    <p>Engine present but low-poly (intake-bay surfaces only) — limited breakdown.</p>
+    <span class="tag lim">limited geometry</span>
+  </a>
+</div>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BluePrint AI</title>
+    <meta
+      name="description"
+      content="BluePrint AI is a sleek AI-powered car rendering and customization launch page."
+    />
+    <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="icon" href="./assets/blueprint-ai-logo.jpeg" type="image/jpeg" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./vendor/three.module.js"
+        }
+      }
+    </script>
+  </head>
+  <body data-scene="0">
+    <div class="backdrop" aria-hidden="true">
+      <div class="backdrop-panel backdrop-hero is-active"></div>
+      <div class="backdrop-panel backdrop-problem"></div>
+      <div class="backdrop-panel backdrop-stack"></div>
+      <div class="backdrop-panel backdrop-launch"></div>
+    </div>
+
+    <div class="showroom-layer" aria-hidden="true">
+      <canvas id="showroom"></canvas>
+      <div class="model-loading">Loading showroom</div>
+    </div>
+
+    <header class="site-header">
+      <a class="brand" href="#home" aria-label="BluePrint AI home">
+        <img class="brand-mark" src="./assets/blueprint-ai-logo.jpeg" alt="" />
+        <span>BluePrint AI</span>
+      </a>
+      <nav class="top-nav" aria-label="Primary">
+        <a href="#problem">Problem</a>
+        <a href="#stack">AI</a>
+        <a class="launch-link" href="./app.html">Launch App</a>
+      </nav>
+    </header>
+
+    <nav class="page-dots" aria-label="Page sections">
+      <a class="dot is-active" href="#home" aria-label="Go to page 1"></a>
+      <a class="dot" href="#problem" aria-label="Go to page 2"></a>
+      <a class="dot" href="#stack" aria-label="Go to page 3"></a>
+      <a class="dot" href="#launch" aria-label="Go to page 4"></a>
+    </nav>
+
+    <main>
+      <section id="home" class="page-section hero is-active" data-index="0">
+        <div class="section-content hero-copy">
+          <p class="eyebrow">AI car rendering studio</p>
+          <h1>BluePrint AI</h1>
+          <p class="lead">Ask for the build. Watch the car change.</p>
+          <div class="actions">
+            <a class="primary-action" href="./app.html">
+              Launch BluePrint
+              <span aria-hidden="true">-&gt;</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section id="problem" class="page-section problem" data-index="1">
+        <div class="section-content problem-copy">
+          <div class="problem-heading">
+            <p class="eyebrow">Why it exists</p>
+            <h2>Make car ideas visible.</h2>
+            <p class="lead">
+              BluePrint AI was created for people who want to understand cars
+              with their eyes, not just with spec sheets.
+            </p>
+            <div class="rainbow-line" aria-hidden="true"></div>
+          </div>
+          <div class="problem-grid" aria-label="What BluePrint AI helps with">
+            <article class="problem-card">
+              <span>01</span>
+              <h3>Learn the pieces</h3>
+              <p>
+                Ask about splitters, wings, wheels, suspension, paint, trim, or
+                interior choices and get clear explanations tied to the car in
+                front of you.
+              </p>
+            </article>
+            <article class="problem-card">
+              <span>02</span>
+              <h3>Try the style</h3>
+              <p>
+                Explore a clean daily look, track setup, widebody idea, color
+                change, or full personal build before committing time or money.
+              </p>
+            </article>
+            <article class="problem-card">
+              <span>03</span>
+              <h3>Compare options</h3>
+              <p>
+                See how different parts change the attitude of a car and compare
+                practical tradeoffs like fitment, cost, comfort, and purpose.
+              </p>
+            </article>
+            <article class="problem-card">
+              <span>04</span>
+              <h3>Create with confidence</h3>
+              <p>
+                Turn vague ideas into a visual direction, then refine it with
+                questions until the build feels like something you would actually
+                drive.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="stack" class="page-section stack" data-index="2">
+        <div class="section-content stack-copy">
+          <div class="stack-heading">
+            <p class="eyebrow">AI stack</p>
+            <h2>One verified visual conversation.</h2>
+            <p class="stack-intro">
+              Featherless gives BluePrint AI flexible model access for rich car
+              knowledge. FlutterAI shapes the fast interface layer, while Supabase
+              keeps every specification and research answer grounded in verified data.
+            </p>
+          </div>
+          <div class="stack-panel">
+            <div class="partner-row">
+              <div class="partner partner-featherless">
+                <img src="./assets/featherless-logo.svg" alt="Featherless logo" />
+              </div>
+              <div class="partner partner-flutter">
+                <svg viewBox="0 0 96 96" aria-hidden="true">
+                  <path d="M16 50 58 8h24L40 50H16Z" fill="#54c5f8" />
+                  <path d="m42 52 20-20h24L54 64 42 52Z" fill="#54c5f8" />
+                  <path d="m54 64 12 12H42L28 62l14-10 12 12Z" fill="#01579b" />
+                  <path d="m42 52 12 12 12-12H42Z" fill="#29b6f6" />
+                </svg>
+                <span>FlutterAI</span>
+              </div>
+              <div class="partner partner-supabase">
+                <svg viewBox="0 0 64 64" aria-hidden="true">
+                  <path d="M35 4 12 35h20l-3 25 23-32H32L35 4Z" fill="currentColor" />
+                </svg>
+                <span>supabase</span>
+              </div>
+            </div>
+            <div class="stack-grid" aria-label="How the AI stack supports BluePrint AI">
+              <article class="stack-card">
+                <h3>Ask naturally</h3>
+                <p>
+                  The product is designed around normal car questions, from simple
+                  buying help to deeper build advice.
+                </p>
+              </article>
+              <article class="stack-card">
+                <h3>Respond visually</h3>
+                <p>
+                  Answers can become visible changes, letting the interface feel
+                  more like a showroom conversation than a search box.
+                </p>
+              </article>
+              <article class="stack-card">
+                <h3>Keep refining</h3>
+                <p>
+                  Every prompt should move the build closer to your taste, whether
+                  you care about performance, stance, color, or comfort.
+                </p>
+              </article>
+              <article class="stack-card">
+                <h3>Trust the answer</h3>
+                <p>
+                  Specs, performance, pricing, ownership notes, and research chunks
+                  come from a Supabase schema with public-read RLS and source-aware records.
+                </p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="launch" class="page-section launch" data-index="3">
+        <div class="section-content launch-copy">
+          <p class="eyebrow">Launch page</p>
+          <h2>Open the AI showroom.</h2>
+          <p class="lead">
+            A cleaner way to explore a car, ask questions, and design the version
+            in your head.
+          </p>
+          <a class="primary-action launch-button" href="./app.html">
+            Launch BluePrint
+            <span aria-hidden="true">-&gt;</span>
+          </a>
+          <p class="launch-note" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

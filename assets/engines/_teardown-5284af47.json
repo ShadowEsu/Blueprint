@@ -1,0 +1,164 @@
+{
+ "center": [
+  -0.016653583536857756,
+  0.4114172146994189,
+  -1.6928116548625838
+ ],
+ "extent": 0.7172048091888428,
+ "parts": [
+  {
+   "file": "parts/Upper_Center.glb",
+   "label": "Upper-Center",
+   "tris": 678,
+   "islands": 28,
+   "centroid": [
+    -0.05474534142514085,
+    0.4548194792040849,
+    -1.7020908288358279
+   ]
+  },
+  {
+   "file": "parts/Mid_Center.glb",
+   "label": "Mid-Center",
+   "tris": 637,
+   "islands": 51,
+   "centroid": [
+    -0.04253033266883831,
+    0.38131065544217846,
+    -1.8403858473295769
+   ]
+  },
+  {
+   "file": "parts/Mid_Left.glb",
+   "label": "Mid-Left",
+   "tris": 611,
+   "islands": 32,
+   "centroid": [
+    -0.2565110761768762,
+    0.451532602203337,
+    -1.5800474216047327
+   ]
+  },
+  {
+   "file": "parts/Mid_Right_2.glb",
+   "label": "Mid-Right 2",
+   "tris": 338,
+   "islands": 23,
+   "centroid": [
+    0.2575740884239613,
+    0.44598490785751854,
+    -1.6752714476407329
+   ]
+  },
+  {
+   "file": "parts/Mid_Right.glb",
+   "label": "Mid-Right",
+   "tris": 296,
+   "islands": 23,
+   "centroid": [
+    0.24450305217654017,
+    0.43392620653670305,
+    -1.4995888652269245
+   ]
+  },
+  {
+   "file": "parts/Upper_Left.glb",
+   "label": "Upper-Left",
+   "tris": 260,
+   "islands": 33,
+   "centroid": [
+    -0.1670185636907502,
+    0.46205416557636675,
+    -1.820179582724173
+   ]
+  },
+  {
+   "file": "parts/Lower_Left_4.glb",
+   "label": "Lower-Left 4",
+   "tris": 234,
+   "islands": 39,
+   "centroid": [
+    -0.31128953760810446,
+    0.3535114648248849,
+    -1.804198314096809
+   ]
+  },
+  {
+   "file": "parts/Lower_Right_2.glb",
+   "label": "Lower-Right 2",
+   "tris": 226,
+   "islands": 32,
+   "centroid": [
+    0.3139734875599482,
+    0.34491306739038574,
+    -1.8227096371762257
+   ]
+  },
+  {
+   "file": "parts/Upper_Right.glb",
+   "label": "Upper-Right",
+   "tris": 188,
+   "islands": 35,
+   "centroid": [
+    0.1063913138350941,
+    0.48120665625298015,
+    -1.7833968657278618
+   ]
+  },
+  {
+   "file": "parts/Lower_Right.glb",
+   "label": "Lower-Right",
+   "tris": 149,
+   "islands": 21,
+   "centroid": [
+    0.09757948404649171,
+    0.24595940139136027,
+    -1.4924319711975405
+   ]
+  },
+  {
+   "file": "parts/Lower_Left_2.glb",
+   "label": "Lower-Left 2",
+   "tris": 106,
+   "islands": 39,
+   "centroid": [
+    -0.13713710692785033,
+    0.23526895476509757,
+    -1.757961480550252
+   ]
+  },
+  {
+   "file": "parts/Lower_Left_3.glb",
+   "label": "Lower-Left 3",
+   "tris": 68,
+   "islands": 22,
+   "centroid": [
+    -0.08023239785274139,
+    0.26496714382845254,
+    -1.477090252382841
+   ]
+  },
+  {
+   "file": "parts/Lower_Right_3.glb",
+   "label": "Lower-Right 3",
+   "tris": 26,
+   "islands": 20,
+   "centroid": [
+    0.1359786784115807,
+    0.24254411137856907,
+    -1.7398642913433986
+   ]
+  },
+  {
+   "file": "parts/Lower_Left.glb",
+   "label": "Lower-Left",
+   "tris": 15,
+   "islands": 9,
+   "centroid": [
+    -0.2047858557730792,
+    0.3603953546784557,
+    -1.4406757514309931
+   ]
+  }
+ ]
+}

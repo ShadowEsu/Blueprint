@@ -1,0 +1,14 @@
+{
+  "name": "blueprint",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "python3 -m http.server 4173",
+    "dev:agent": "node scripts/serve-agent.mjs",
+    "build": "echo \"Static site — no build step\""
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "openai": "^4.77.0"
+  }
+}

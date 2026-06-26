@@ -1,0 +1,8 @@
+# Keep Vercel deploy under 100MB — large GLBs load via jsDelivr from GitHub (see src/config.js)
+assets/models/
+assets/blueprint-showroom-car.glb
+agent/
+integrations/
+.cursor/
+.vscode/
+node_modules/

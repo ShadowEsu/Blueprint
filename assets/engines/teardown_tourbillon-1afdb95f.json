@@ -1,0 +1,79 @@
+{
+ "car": "Bugatti Tourbillon",
+ "full": "engine_full_tourbillon.glb",
+ "dir": "parts_tourbillon",
+ "center": [
+  -9.468006128434629e-07,
+  0.007441932724782561,
+  -0.010051228719232983
+ ],
+ "extent": 0.011770619784952254,
+ "parts": [
+  {
+   "file": "parts_tourbillon/T_Lower_Left.glb",
+   "label": "Lower-Left",
+   "tris": 506,
+   "islands": 14,
+   "centroid": [
+    -0.0037229101716347154,
+    0.007170687212354352,
+    -0.009427040730915463
+   ]
+  },
+  {
+   "file": "parts_tourbillon/T_Upper_Right.glb",
+   "label": "Upper-Right",
+   "tris": 496,
+   "islands": 10,
+   "centroid": [
+    0.0031448620946336906,
+    0.007552266267106147,
+    -0.011268367100684342
+   ]
+  },
+  {
+   "file": "parts_tourbillon/T_Upper_Left.glb",
+   "label": "Upper-Left",
+   "tris": 273,
+   "islands": 16,
+   "centroid": [
+    -0.000308125524355601,
+    0.00807944907974706,
+    -0.012102970206768046
+   ]
+  },
+  {
+   "file": "parts_tourbillon/T_Lower_Right.glb",
+   "label": "Lower-Right",
+   "tris": 204,
+   "islands": 4,
+   "centroid": [
+    0.004122281022867317,
+    0.006901273097884675,
+    -0.007719196717557278
+   ]
+  },
+  {
+   "file": "parts_tourbillon/T_Upper_Left_2.glb",
+   "label": "Upper-Left 2",
+   "tris": 58,
+   "islands": 25,
+   "centroid": [
+    -3.0298610052869973e-05,
+    0.008748716217574217,
+    -0.006905970859429603
+   ]
+  },
+  {
+   "file": "parts_tourbillon/T_Lower_Right_2.glb",
+   "label": "Lower-Right 2",
+   "tris": 37,
+   "islands": 2,
+   "centroid": [
+    0.0045758609770111675,
+    0.006190240372760215,
+    -0.006470465591727918
+   ]
+  }
+ ]
+}

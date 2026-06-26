@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "functions": {
+    "api/agent.js": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/vendor/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ]
+}

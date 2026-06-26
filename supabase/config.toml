@@ -1,0 +1,4 @@
+project_id = "iezvavgrprikyqcwgams"
+
+[functions.agent]
+verify_jwt = false
