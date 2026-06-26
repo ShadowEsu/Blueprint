@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Atlas AI — GT3 RS Viewer</title>
+<style>
+  :root { --bg:#0a0d11; --gold:#d9b540; --panel:rgba(20,24,30,0.86); --text:#f3f5f8; --muted:#8b94a0; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; overflow:hidden; }
+  #scene { position:fixed; inset:0; }
+  #load { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px; z-index:60; background:var(--bg); }
+  #load .ring { width:46px; height:46px; border:3px solid rgba(217,181,64,.25); border-top-color:var(--gold); border-radius:50%; animation:spin 1s linear infinite; }
+  #load p { color:var(--muted); font-size:13px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  #status { position:fixed; top:14px; left:14px; font-size:12px; color:var(--muted); background:rgba(0,0,0,.35); padding:6px 12px; border-radius:20px; z-index:30; }
+  #status b { color:var(--gold); }
+  #endpoint { position:fixed; top:14px; right:14px; z-index:30; }
+  #endpoint input { background:rgba(0,0,0,.4); border:1px solid #2a2f37; color:var(--text); font-size:11px; padding:6px 9px; border-radius:8px; width:230px; }
+  #labels { position:fixed; inset:0; pointer-events:none; z-index:20; }
+  .label { position:absolute; transform:translate(-50%,-50%); font-size:11px; letter-spacing:.5px; color:var(--gold); background:rgba(0,0,0,.6); padding:3px 8px; border-radius:6px; border:1px solid rgba(217,181,64,.4); white-space:nowrap; }
+
+  #orb { position:fixed; bottom:26px; right:26px; width:64px; height:64px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #ffe89a, var(--gold) 55%, #8a6f1f); cursor:pointer; z-index:40;
+    display:flex; align-items:center; justify-content:center; animation:pulse 2.6s infinite ease-in-out; }
+  #orb span { font-size:26px; }
+  @keyframes pulse { 0%,100%{ box-shadow:0 0 0 0 rgba(217,181,64,.5); transform:scale(1);} 50%{ box-shadow:0 0 0 16px rgba(217,181,64,0); transform:scale(1.05);} }
+
+  #panel { position:fixed; bottom:26px; right:26px; width:380px; max-height:72vh; z-index:41; background:var(--panel);
+    backdrop-filter:blur(14px); border:1px solid rgba(217,181,64,.25); border-radius:20px; display:none; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+  #panel.open { display:flex; }
+  .head { display:flex; align-items:center; gap:10px; padding:16px 18px; border-bottom:1px solid rgba(255,255,255,.06); }
+  .head .dot { width:10px; height:10px; border-radius:50%; background:var(--gold); box-shadow:0 0 10px var(--gold); }
+  .head h1 { font-size:15px; font-weight:600; flex:1; }
+  .head .x { color:var(--muted); cursor:pointer; font-size:18px; }
+  #log { padding:14px 16px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:10px; }
+  .msg { font-size:13.5px; line-height:1.5; padding:10px 13px; border-radius:13px; max-width:90%; }
+  .me { align-self:flex-end; background:#23304a; }
+  .atlas { align-self:flex-start; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.06); }
+  .acts { align-self:flex-start; font-size:11px; color:var(--muted); font-family:ui-monospace,monospace; }
+  .specs { align-self:flex-start; background:rgba(217,181,64,.08); border:1px solid rgba(217,181,64,.25); border-radius:12px; padding:10px 13px; font-size:12px; width:90%; }
+  .specs b { color:var(--gold); } .specs div { display:flex; justify-content:space-between; padding:2px 0; }
+  .chips { display:flex; flex-wrap:wrap; gap:7px; padding:0 16px 12px; }
+  .chip { font-size:12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); padding:6px 11px; border-radius:20px; cursor:pointer; }
+  .chip:hover { border-color:var(--gold); }
+  .input { display:flex; gap:8px; padding:12px 14px; border-top:1px solid rgba(255,255,255,.06); }
+  .input input { flex:1; background:rgba(0,0,0,.35); border:1px solid #2a2f37; color:var(--text); padding:11px 13px; border-radius:12px; font-size:13.5px; outline:none; }
+  .input input:focus { border-color:var(--gold); }
+  .input button { background:var(--gold); color:#1a1407; border:none; border-radius:12px; padding:0 16px; font-weight:600; cursor:pointer; }
+  .input button:disabled { opacity:.5; }
+</style>
+</head>
+<body>
+  <div id="scene"></div>
+  <div id="labels"></div>
+  <div id="load"><div class="ring"></div><p id="loadtxt">Loading GT3 RS…</p></div>
+  <div id="status">Atlas: <b id="st">loading</b> · drag orbit · scroll zoom</div>
+  <div id="endpoint"><input id="ep" value="http://localhost:8000" title="Agent endpoint" /></div>
+
+  <div id="orb" title="Talk to Atlas"><span>◉</span></div>
+  <div id="panel">
+    <div class="head"><div class="dot"></div><h1>Atlas AI</h1><div class="x" id="close">✕</div></div>
+    <div id="log"><div class="msg atlas">Ask me to show, explain, explode, isolate, or repaint any part of this GT3 RS.</div></div>
+    <div class="chips" id="chips"></div>
+    <div class="input"><input id="q" placeholder="Ask anything…" autocomplete="off" /><button id="send">Ask</button></div>
+  </div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ── Tunables (tweak if explode/zoom feels off) ───────────────────────────────
+const CONFIG = { modelSize:5, explodeFactor:0.5, focusZoom:2.2, sideZoom:1.8 };
+
+// ── Which real GLB node names belong to each logical part the AI can target ──
+// Matched (case-insensitive) against PART-LEVEL node names only, so the engine's
+// shared material on the exhaust doesn't get mislabeled. Add a row → new target.
+const PART_MAP = {
+  engine:       ['engine','intake','heatshield'],
+  exhaust:      ['exhaust','muffler'],
+  rear_wing:    ['carbon_wing','wing','spoiler'],
+  wheels:       ['wheels_20x9','wheels','tyre'],
+  brakes:       ['brakedisc','caliper','brakelines'],
+  suspension:   ['coilover','lowerarm','upperarm','swaybar','pushrod','trailingarm','tierod','subframe','hub_','steeringbox'],
+  transmission: ['transaxle','driveshaft','halfshaft','diff_'],
+  fuel:         ['fueltank','fuellines'],
+  cooling:      ['radiator','coolant'],
+  body:         ['body_gt3rs','body.','fender','bumper','hood','tailgate','sideskirt','mirror','roof','fascia'],
+  doors:        ['door_l','door_r'],
+  interior:     ['seat','dash','steer','shifter','pedal','doorpanel','clock','gauges','needle','signalstalk'],
+};
+
+// ── Three.js setup ───────────────────────────────────────────────────────────
+const mount = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+mount.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#0a0d11');
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.05, 1000);
+camera.position.set(6,3,8);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.1;
+controls.addEventListener('start', () => { camAnimating = false; });  // the mouse always wins
+
+scene.add(new THREE.HemisphereLight('#cfe0ff','#202028', 1.0));
+const key = new THREE.DirectionalLight('#fff7e6', 2.0); key.position.set(6,9,6); scene.add(key);
+const fill = new THREE.DirectionalLight('#9fd0ff', 0.7); fill.position.set(-6,4,-5); scene.add(fill);
+scene.add(new THREE.GridHelper(40,40,0x1b2230,0x141a22));
+
+// ── State filled after load ──────────────────────────────────────────────────
+let partNodes = [];               // top-level part nodes
+let centroidLocal = new THREE.Vector3();
+let modelCenter = new THREE.Vector3();
+let orient = { front:new THREE.Vector3(0,0,1), right:new THREE.Vector3(1,0,0), up:new THREE.Vector3(0,1,0) };
+const explodedMovers = new Set();
+const highlighted = new Set();    // meshes currently glowing
+let camGoalPos = camera.position.clone(), camGoalTgt = new THREE.Vector3();
+let camAnimating = false;   // true only while easing to an AI focus; yields to the mouse
+
+// ── Load the real model ──────────────────────────────────────────────────────
+new GLTFLoader().load('./models/gt3rs.glb', (gltf) => {
+  const model = gltf.scene;
+  // center + scale to a predictable size
+  let box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+  const s = CONFIG.modelSize / Math.max(size.x,size.y,size.z);
+  model.scale.setScalar(s);
+  model.position.sub(center.multiplyScalar(s));
+  scene.add(model);
+
+  // re-measure in world space
+  box = new THREE.Box3().setFromObject(model); modelCenter = box.getCenter(new THREE.Vector3());
+
+  // part nodes = children of RootNode (clean names, no material suffix "_0")
+  const root = model.getObjectByName('RootNode') || biggestGroup(model);
+  partNodes = root.children.filter(c => !/_0$/.test(c.name));
+
+  // Exploded target per part, derived from its WORLD bounding-box center — robust
+  // even when the GLB bakes geometry into meshes and leaves node positions at 0.
+  model.updateMatrixWorld(true);
+  const modelRadius = box.getSize(new THREE.Vector3()).length() / 2;
+  const D = modelRadius * CONFIG.explodeFactor;
+  partNodes.forEach(p => {
+    p.userData.home = p.position.clone();
+    const c = new THREE.Box3().setFromObject(p).getCenter(new THREE.Vector3());
+    const dir = c.clone().sub(modelCenter); dir.y *= 0.55;          // flatten vertical fan-out
+    if (dir.lengthSq() < 1e-6) dir.set(0, 1, 0);
+    dir.normalize();
+    const parent = p.parent;
+    const fromLocal = parent.worldToLocal(c.clone());
+    const toLocal   = parent.worldToLocal(c.clone().addScaledVector(dir, D));
+    p.userData.boom = p.userData.home.clone().add(toLocal.sub(fromLocal));
+  });
+
+  orient = computeOrientation();
+  document.getElementById('load').style.display = 'none';
+  st.textContent = 'idle';
+  AtlasScene.focus_camera({ target:'whole_car' });
+}, (e)=>{ if(e.total) document.getElementById('loadtxt').textContent = `Loading GT3 RS… ${Math.round(e.loaded/e.total*100)}%`; },
+   (err)=>{ document.getElementById('loadtxt').textContent = 'Model failed to load — serve over http (see README).'; console.error(err); });
+
+function biggestGroup(model){ let best=model, n=0; model.traverse(o=>{ if(o.children.length>n){n=o.children.length;best=o;} }); return best; }
+
+// world center of the first part node matching a keyword (for orientation)
+function centerOf(keyword){
+  const p = partNodes.find(n => n.name.toLowerCase().includes(keyword));
+  return p ? new THREE.Box3().setFromObject(p).getCenter(new THREE.Vector3()) : null;
+}
+function computeOrientation(){
+  const bf = centerOf('bumper_f'), br = centerOf('bumper_r');
+  const dl = centerOf('door_l'), dr = centerOf('door_r');
+  const front = (bf&&br) ? bf.clone().sub(br).setY(0).normalize() : new THREE.Vector3(0,0,1);
+  const right = (dl&&dr) ? dr.clone().sub(dl).setY(0).normalize() : new THREE.Vector3(1,0,0);
+  return { front, right, up:new THREE.Vector3(0,1,0) };
+}
+
+// ── Part lookup helpers ──────────────────────────────────────────────────────
+function nodesFor(target){
+  if (target === 'whole_car') return partNodes;
+  const keys = PART_MAP[target]; if(!keys) return [];
+  return partNodes.filter(n => keys.some(k => n.name.toLowerCase().includes(k)));
+}
+function meshesUnder(nodes){ const out=[]; nodes.forEach(n=>n.traverse(o=>{ if(o.isMesh) out.push(o); })); return out; }
+function boxOf(nodes){ const b=new THREE.Box3(); nodes.forEach(n=>b.union(new THREE.Box3().setFromObject(n))); return b; }
+
+// ── AtlasScene: the exact API your Flutter/Three bridge exposes ───────────────
+const NAMED = { 'nardo grey':'#6E7479','nardo gray':'#6E7479','gunmetal':'#3a3f44','racing green':'#13452a','guards red':'#c0121c' };
+function resolveColor(c){ const k=(c||'').toLowerCase(); if(NAMED[k]) return NAMED[k]; try{ return new THREE.Color(c).getStyle(); }catch{ return '#c0121c'; } }
+
+const AtlasScene = {
+  focus_camera({ target }){
+    if (!partNodes.length) return;
+    camAnimating = true;   // start easing; the loop releases when we arrive or you grab the mouse
+    const directional = { front:1, rear:1, left:1, right:1, top:1 };
+    if (directional[target] || target==='whole_car'){
+      const b = boxOf(partNodes), c = b.getCenter(new THREE.Vector3()), r = b.getSize(new THREE.Vector3()).length()/2;
+      const {front,right,up} = orient; let dir;
+      if (target==='front') dir = front.clone().addScaledVector(up,0.35);
+      else if (target==='rear') dir = front.clone().negate().addScaledVector(up,0.35);
+      else if (target==='left') dir = right.clone().negate().addScaledVector(up,0.3);
+      else if (target==='right') dir = right.clone().addScaledVector(up,0.3);
+      else if (target==='top') dir = up.clone().addScaledVector(front,0.2);
+      else dir = front.clone().multiplyScalar(0.8).addScaledVector(right,0.8).addScaledVector(up,0.6);
+      camGoalTgt.copy(c); camGoalPos.copy(c).addScaledVector(dir.normalize(), r*CONFIG.sideZoom);
+      return;
+    }
+    const nodes = nodesFor(target); if(!nodes.length) return;
+    const b = boxOf(nodes), c = b.getCenter(new THREE.Vector3()), r = Math.max(b.getSize(new THREE.Vector3()).length()/2, 0.4);
+    const {front,right,up} = orient;
+    const dir = front.clone().multiplyScalar(0.7).addScaledVector(right,0.7).addScaledVector(up,0.5).normalize();
+    camGoalTgt.copy(c); camGoalPos.copy(c).addScaledVector(dir, r*CONFIG.focusZoom);
+  },
+  highlight({ target }){
+    const meshes = meshesUnder(nodesFor(target));
+    meshes.forEach(m => {
+      if (!m.userData.origMat){ m.userData.origMat = m.material; m.material = m.material.clone(); }
+      highlighted.add(m);
+    });
+    setTimeout(()=>clearHighlight(meshes), 5000);
+  },
+  explode({ target }){ nodesFor(target).forEach(n => explodedMovers.add(n)); },
+  isolate({ target }){
+    const keep = new Set(nodesFor(target));
+    partNodes.forEach(n => n.visible = keep.has(n));
+  },
+  reset_view(){
+    explodedMovers.clear();
+    partNodes.forEach(n => n.visible = true);
+    clearHighlight([...highlighted]);
+    AtlasScene.focus_camera({ target:'whole_car' });
+  },
+  show_labels({ target }){ labelsTarget = target || 'whole_car'; setTimeout(()=>labelsTarget=null, 6000); },
+  show_specs(){ /* spec card rendered from response.data in chat */ },
+  set_paint({ color }){
+    const c = resolveColor(color);
+    let n=0;
+    scene.traverse(o => {
+      if (o.isMesh && o.name.toLowerCase().includes('carpaint')){
+        if (!o.userData.paintMat){ o.userData.paintMat = o.material; o.material = o.material.clone(); }
+        o.material.color.set(c); n++;
+      }
+    });
+    if(!n) console.warn('no carPaint meshes found');
+  },
+};
+function clearHighlight(meshes){ meshes.forEach(m => { if(m.userData.origMat){ m.material.dispose?.(); m.material = m.userData.origMat; m.userData.origMat=null; } highlighted.delete(m); }); }
+
+// ── ActionExecutor: client twin of the server tool registry ──────────────────
+const executor = { h:{}, reg(n,f){ this.h[n]=f; return this; },
+  async run(actions){ for(const a of actions){ const fn=this.h[a.tool]; if(!fn){ console.warn('no handler', a.tool); continue; } await fn(a.args||{}); await sleep(500); } } };
+['focus_camera','highlight','explode','isolate','reset_view','show_labels','show_specs','set_paint']
+  .forEach(n => executor.reg(n, AtlasScene[n]));
+
+// ── Talk to the agent ────────────────────────────────────────────────────────
+const $ = s => document.querySelector(s), log=$('#log'), st=$('#st');
+let busy=false;
+async function ask(text){
+  if(busy || !text.trim()) return; busy=true; $('#send').disabled=true; st.textContent='thinking…';
+  bubble('me', text);
+  try{
+    const res = await fetch($('#ep').value.trim(), { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ message:text, context:{ car:'911 GT3 RS' } }) });
+    if(!res.ok) throw new Error(res.status+' '+await res.text());
+    const data = await res.json();
+    if(data.actions?.length) bubble('acts', data.actions.map(a=>`${a.tool}(${Object.values(a.args||{}).join(',')})`).join('  →  '));
+    if(data.speech) bubble('atlas', data.speech);
+    renderSpecs(data.data);
+    await executor.run(data.actions||[]);
+    st.textContent='idle';
+  }catch(err){ bubble('atlas','⚠️ '+err.message+' — is the agent running on '+$('#ep').value+'?'); st.textContent='error'; }
+  busy=false; $('#send').disabled=false; $('#q').focus();
+}
+function bubble(cls,text){ const d=document.createElement('div'); d.className='msg '+cls; d.textContent=text; log.appendChild(d); log.scrollTop=log.scrollHeight; }
+function renderSpecs(data){
+  const info = data && data.get_part_facts; if(!info || info.found===false || !info.facts) return;
+  const d=document.createElement('div'); d.className='specs';
+  d.innerHTML = `<b>${String(info.part||'').toUpperCase()} — ${info.car||''}</b>` +
+    Object.entries(info.facts).map(([k,v])=>`<div><span>${k}</span><span>${v}</span></div>`).join('');
+  log.appendChild(d); log.scrollTop=log.scrollHeight;
+}
+
+// suggestion chips
+['Show me the engine','Explain the suspension','Explode the whole car','Isolate the brakes','Paint it Nardo Grey','Reset view']
+  .forEach(s=>{ const c=document.createElement('div'); c.className='chip'; c.textContent=s; c.onclick=()=>{ openPanel(); ask(s); }; $('#chips').appendChild(c); });
+function openPanel(){ $('#panel').classList.add('open'); $('#orb').style.display='none'; $('#q').focus(); }
+$('#orb').onclick=openPanel;
+$('#close').onclick=()=>{ $('#panel').classList.remove('open'); $('#orb').style.display='flex'; };
+$('#send').onclick=()=>{ const v=$('#q').value; $('#q').value=''; ask(v); };
+$('#q').addEventListener('keydown', e=>{ if(e.key==='Enter'){ const v=$('#q').value; $('#q').value=''; ask(v); } });
+
+// ── Render loop: ease camera, animate explode, pulse highlights, draw labels ──
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+let labelsTarget=null; const labelEl=$('#labels');
+function tick(t){
+  if (camAnimating){
+    camera.position.lerp(camGoalPos, 0.10);
+    controls.target.lerp(camGoalTgt, 0.10);
+    if (camera.position.distanceTo(camGoalPos) < 0.05) camAnimating = false;  // arrived → hand back to mouse
+  }
+  controls.update();
+  partNodes.forEach(p => { const goal = explodedMovers.has(p)? p.userData.boom : p.userData.home; if(goal) p.position.lerp(goal, 0.12); });
+  const glow = 0.35 + 0.3*Math.sin(t*0.006);
+  highlighted.forEach(m => { if(m.material.emissive){ m.material.emissive.setRGB(glow*0.85, glow*0.7, glow*0.12); } });
+  drawLabels();
+  renderer.render(scene, camera); requestAnimationFrame(tick);
+}
+function drawLabels(){
+  labelEl.innerHTML=''; if(!labelsTarget || !partNodes.length) return;
+  const groups = labelsTarget==='whole_car' ? Object.keys(PART_MAP) : [labelsTarget];
+  groups.forEach(g => { const nodes=nodesFor(g); if(!nodes.length) return;
+    const c = boxOf(nodes).getCenter(new THREE.Vector3()).project(camera); if(c.z>1) return;
+    const el=document.createElement('div'); el.className='label'; el.textContent=g.replace('_',' ');
+    el.style.left=((c.x*0.5+0.5)*innerWidth)+'px'; el.style.top=((-c.y*0.5+0.5)*innerHeight)+'px'; labelEl.appendChild(el);
+  });
+}
+addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

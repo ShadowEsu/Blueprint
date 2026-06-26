@@ -1,0 +1,19 @@
+{
+  // Enable Deno ONLY for the edge function folder (not the whole workspace),
+  // so the Dart/Flutter side isn't affected.
+  "deno.enable": true,
+  "deno.enablePaths": ["supabase/functions"],
+  "deno.lint": true,
+  "deno.unstable": false,
+
+  "editor.formatOnSave": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+
+  // Quiet the built-in TS server for the Deno files (Deno's LSP handles them).
+  "typescript.tsdk": "",
+  "files.exclude": {
+    "**/.DS_Store": true
+  }
+}
