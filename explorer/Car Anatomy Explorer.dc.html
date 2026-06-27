@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./asset-config.js"></script>
+<script src="./agent-bridge.js"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -375,6 +376,45 @@ const THEMES = {
   },
 };
 
+const TARGET_TO_CAT = {
+  engine: "engine",
+  exhaust: "exhaust",
+  wheels: "wheels",
+  rear_wing: "wing",
+  body: "body",
+  doors: "doors",
+  interior: "interior",
+  suspension: "wheels",
+  transmission: "engine",
+  brakes: "wheels",
+  cooling: "hood",
+  fuel: "body",
+};
+
+const PAINTABLE_CATS = new Set(["body", "hood", "doors"]);
+const PAINT_EXCLUDE =
+  /glass|chrome|wheel|tire|tyre|rubber|carbon|grille|light|mirror|brake|exhaust|interior|seat|dash|pedal|engine|trans|diff|shaft|radiator|muffler|needle|steer|shifter|belt|tint|led|screen|knob|boot|stalk/i;
+
+const NAMED_COLORS = {
+  "nardo grey": "#6e7479",
+  "nardo gray": "#6e7479",
+  gunmetal: "#3a3f44",
+  "racing green": "#13452a",
+  "guards red": "#c0121c",
+  "blueprint blue": "#1e64b4",
+  silver: "#c0c4cc",
+  red: "#c0121c",
+  blue: "#1e64b4",
+  green: "#1a7a3a",
+  black: "#111318",
+  white: "#f2f2f2",
+  yellow: "#f5c400",
+  orange: "#e47c0e",
+  purple: "#6b3fa0",
+  gold: "#c9a227",
+  pink: "#e0567a",
+};
+
 /* ===== COMPONENT ============================================== */
 
 class Component extends DCLogic {
@@ -391,7 +431,7 @@ class Component extends DCLogic {
       progress: 0,
       chatOpen: false,
       chatBusy: false,
-      chatLog: [{ role: 'bp', text: 'Ask me to show a part, take the car apart, reset it, or switch cars.' }],
+      chatLog: [{ role: 'bp', text: 'Ask me to show a part, change the paint color, explode the car, or reset the view.' }],
     };
     this.contRef = React.createRef();
     this.chatInputRef = React.createRef();
@@ -404,6 +444,9 @@ class Component extends DCLogic {
     this._slideTo = 0;
     this._slideDist = 8;
     this._lastTickAt = 0;
+    this._aiHistory = [];
+    this._highlighted = new Set();
+    this._isolated = false;
   }
 
   componentDidUpdate() { this._dirty = true; }
@@ -827,8 +870,13 @@ class Component extends DCLogic {
     this.pushChat('user', text);
     this.setState({ chatBusy: true });
     try {
-      if (!window.claude || typeof window.claude.complete !== 'function') throw new Error('Assistant unavailable in this context');
-      const reply = await this.askAI(text);
+      if (!window.BlueprintAgent) throw new Error('Assistant unavailable in this context');
+      const car = this.carData[this.state.carIdx];
+      const reply = await window.BlueprintAgent.ask(
+        text,
+        { car: `${car.maker} ${car.name}` },
+        this._aiHistory
+      );
       if (reply.speech) this.pushChat('bp', reply.speech);
       this.runChatActions(reply.actions || []);
     } catch (err) {
@@ -838,54 +886,170 @@ class Component extends DCLogic {
       const i = this.chatInputRef.current; if (i) i.focus();
     });
   }
-  async askAI(text) {
-    const car = this.carData[this.state.carIdx];
-    const partList = Object.keys(car.info).map(k => `${k} \u2014 ${car.info[k].name}: ${car.info[k].desc}`).join('\n');
-    const carsList = this.carData.map((c, i) => `${i}: ${c.maker} ${c.name}`).join('; ');
-    const prompt = `You are the AI assistant inside a 3D car-anatomy explorer. The car on screen is the ${car.maker} ${car.name} (${car.tag}).
-You DRIVE the live 3D scene by emitting actions. Reply with ONLY a single JSON object, no prose or markdown outside it:
-{"speech":"1-2 short warm sentences","actions":[{"tool":"<name>","args":{...}}]}
-
-Selectable part keys (use these EXACT strings): wing, hood, doors, wheels, engine, exhaust, interior.
-Verified part info for THIS car (never state a number that isn't here):
-${partList}
-
-Other cars available, switch by index: ${carsList}
-
-Tools:
-- select_part({part})   // frame a part and show its info card
-- explode({pct})        // 0-100, pull the whole car apart
-- reset({})             // reassemble and deselect
-- switch_car({index})   // change the car on screen
-
-Map intent to actions: "show me the engine" -> select_part(engine); "take it apart" -> explode(100); "put it back together" -> reset; "show the Ferrari" -> switch_car(its index). Keep speech short; the card shows the detail. Act, don't ask clarifying questions.
-User: ${text}
-Reply now with ONLY the JSON object.`;
-    const raw = await window.claude.complete(prompt);
-    return this.parseAI(raw);
+  resolveColor(input) {
+    const key = String(input || '').trim().toLowerCase();
+    if (NAMED_COLORS[key]) return NAMED_COLORS[key];
+    try {
+      return new window.THREE.Color(input).getStyle();
+    } catch (e) {
+      return '#1e64b4';
+    }
   }
-  parseAI(raw) {
-    if (!raw) return { speech: '', actions: [] };
-    let s = String(raw).trim();
-    const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (fence) s = fence[1].trim();
-    const a = s.indexOf('{'), b = s.lastIndexOf('}');
-    if (a >= 0 && b > a) s = s.slice(a, b + 1);
-    try { return JSON.parse(s); }
-    catch (e) { return { speech: String(raw).slice(0, 200), actions: [] }; }
+  clearHighlight() {
+    this._highlighted.forEach(m => {
+      if (m.userData._hlOrig) {
+        if (m.material && m.material.dispose) m.material.dispose();
+        m.material = m.userData._hlOrig;
+        m.userData._hlOrig = null;
+      }
+    });
+    this._highlighted.clear();
+    this._dirty = true;
+  }
+  setPaint(color) {
+    const THREE = window.THREE;
+    const hex = this.resolveColor(color);
+    const active = this.carData[this.state.carIdx];
+    if (!active || !active.loaded) return;
+    let painted = 0;
+    active.parts.forEach(part => {
+      if (!PAINTABLE_CATS.has(part.cat)) return;
+      part.meshes.forEach(m => {
+        const label = `${part.name} ${m.name || ''}`;
+        if (PAINT_EXCLUDE.test(label)) return;
+        if (!m.userData._paintOrig) m.userData._paintOrig = m.material;
+        if (!m.userData._paintMat) {
+          m.userData._paintMat = Array.isArray(m.material)
+            ? m.material.map(mm => mm.clone())
+            : m.material.clone();
+        }
+        m.material = m.userData._paintMat;
+        const apply = (mat) => { if (mat && mat.color) mat.color.set(hex); };
+        if (Array.isArray(m.material)) m.material.forEach(apply);
+        else apply(m.material);
+        painted++;
+      });
+    });
+    if (painted) this._dirty = true;
+  }
+  focusCamera(target) {
+    const THREE = window.THREE;
+    const active = this.carData[this.state.carIdx];
+    if (!active || !active.loaded) return;
+    const sz = active.size, fitDist = active.fitDistance, h = sz.y;
+
+    if (!target || target === 'whole_car') {
+      this.controls.target.set(0, h * 0.42, 0);
+      this.camera.position.set(fitDist * 0.85, h * 1.05, fitDist);
+      this.setState({ selected: null });
+      this._dirty = true;
+      return;
+    }
+
+    const dirs = {
+      front: [fitDist * 0.15, h * 0.95, fitDist],
+      rear: [-fitDist * 0.15, h * 0.95, -fitDist],
+      left: [-fitDist, h * 0.85, 0],
+      right: [fitDist, h * 0.85, 0],
+      top: [0, fitDist * 1.35, 0.01],
+    };
+    if (dirs[target]) {
+      const [x, y, z] = dirs[target];
+      this.camera.position.set(x, y, z);
+      this.controls.target.set(0, h * 0.42, 0);
+      this.setState({ selected: null });
+      this._dirty = true;
+      return;
+    }
+
+    const cat = TARGET_TO_CAT[target] || target;
+    const part = active.parts.find(p => p.cat === cat);
+    if (!part) return;
+    this.setState({ selected: cat === 'body' ? null : cat });
+    const box = new THREE.Box3().setFromObject(part.obj);
+    const c = box.getCenter(new THREE.Vector3());
+    const r = Math.max(box.getSize(new THREE.Vector3()).length() * 0.55, 0.5);
+    this.controls.target.copy(c);
+    this.camera.position.set(c.x + r, c.y + r * 0.65, c.z + r);
+    this._dirty = true;
+  }
+  highlightTarget(target) {
+    const THREE = window.THREE;
+    const cat = TARGET_TO_CAT[target] || target;
+    this.clearHighlight();
+    const active = this.carData[this.state.carIdx];
+    if (!active || !active.loaded) return;
+    active.parts.filter(p => p.cat === cat).forEach(part => {
+      part.meshes.forEach(m => {
+        if (!m.userData._hlOrig) m.userData._hlOrig = m.material;
+        const mat = Array.isArray(m.material)
+          ? m.material.map(mm => { const c = mm.clone(); c.emissive = new THREE.Color(0x1a4466); c.emissiveIntensity = 0.55; return c; })
+          : (() => { const c = m.material.clone(); c.emissive = new THREE.Color(0x1a4466); c.emissiveIntensity = 0.55; return c; })();
+        m.material = mat;
+        this._highlighted.add(m);
+      });
+    });
+    this._dirty = true;
+    clearTimeout(this._hlTimer);
+    this._hlTimer = setTimeout(() => this.clearHighlight(), 5000);
+  }
+  explodeTarget(target) {
+    if (!target || target === 'whole_car') {
+      this.setState({ explode: 1, selected: null });
+      return;
+    }
+    const cat = TARGET_TO_CAT[target] || target;
+    if (['wing', 'hood', 'doors', 'wheels', 'engine', 'exhaust', 'interior'].includes(cat)) {
+      this.setState({ selected: cat, explode: 1 });
+    }
+  }
+  isolateTarget(target) {
+    const cat = TARGET_TO_CAT[target] || target;
+    const active = this.carData[this.state.carIdx];
+    if (!active || !active.loaded) return;
+    this._isolated = true;
+    active.parts.forEach(p => { p.obj.visible = (p.cat === cat); });
+    this.setState({ selected: cat === 'body' ? null : cat });
+    this._dirty = true;
+  }
+  resetView() {
+    this.clearHighlight();
+    const active = this.carData[this.state.carIdx];
+    if (this._isolated && active) {
+      active.parts.forEach(p => { p.obj.visible = true; });
+      this._isolated = false;
+    }
+    this.setState({ selected: null, explode: 0 });
+    this.fitTo(this.state.carIdx, false);
+    this._dirty = true;
   }
   runChatActions(actions) {
     const PARTS = ['wing', 'hood', 'doors', 'wheels', 'engine', 'exhaust', 'interior'];
     (actions || []).forEach(act => {
+      const tool = act.tool;
       const args = act.args || {};
-      if (act.tool === 'select_part' && PARTS.includes(args.part)) {
-        this.setState({ selected: args.part });
-      } else if (act.tool === 'explode') {
+
+      if (tool === 'set_paint') {
+        this.setPaint(args.color);
+      } else if (tool === 'focus_camera') {
+        this.focusCamera(args.target);
+      } else if (tool === 'highlight') {
+        this.highlightTarget(args.target);
+      } else if (tool === 'explode' && args.pct != null) {
         const v = Math.max(0, Math.min(100, Number(args.pct) || 0)) / 100;
         this.setState({ explode: v, selected: null });
-      } else if (act.tool === 'reset') {
-        this.setState({ selected: null, explode: 0 });
-      } else if (act.tool === 'switch_car') {
+      } else if (tool === 'explode') {
+        this.explodeTarget(args.target);
+      } else if (tool === 'isolate') {
+        this.isolateTarget(args.target);
+      } else if (tool === 'reset_view' || tool === 'reset') {
+        this.resetView();
+      } else if (tool === 'show_specs') {
+        const cat = TARGET_TO_CAT[args.part || args.target] || args.part;
+        if (PARTS.includes(cat)) this.setState({ selected: cat });
+      } else if (tool === 'select_part' && PARTS.includes(args.part)) {
+        this.setState({ selected: args.part });
+      } else if (tool === 'switch_car') {
         const idx = Number(args.index);
         if (Number.isFinite(idx) && idx >= 0 && idx < this.carData.length) this.switchCarTo(idx);
       }

@@ -4,7 +4,6 @@ explorer/assets/gt3rs/parts/*.glb
 explorer/assets/chiron/*.glb
 explorer/uploads/*.glb
 explorer/uploads/engine_solid_*.glb
-assets/blueprint-showroom-car.glb
 agent/
 integrations/
 .cursor/

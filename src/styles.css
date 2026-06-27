@@ -175,6 +175,7 @@ body[data-scene="2"] .showroom-layer {
 body.model-ready .model-loading {
   opacity: 0;
   transform: translateY(8px);
+  pointer-events: none;
 }
 
 .site-header {
