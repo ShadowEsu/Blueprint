@@ -2,6 +2,7 @@
 assets/models/*.glb
 assets/engines/*.glb
 assets/engines/parts/*.glb
+assets/engines/parts_tourbillon/*.glb
 assets/blueprint-showroom-car.glb
 # Large GLBs served via jsDelivr from GitHub (see explorer/asset-config.js)
 explorer/assets/*.glb
