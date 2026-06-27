@@ -22,6 +22,182 @@ AI-powered 3D car explorer. Launch page, interactive garage, Featherless assista
 
 ---
 
+## Architecture (what we actually run)
+
+These diagrams match the real files and services in this repo — not mockups.
+
+### System overview
+
+```mermaid
+flowchart TB
+  subgraph Browser["Browser"]
+    Launch["/ index.html + src/main.js"]
+    Explorer["/explorer/ DC + Three.js"]
+    Bridge["agent-bridge.js"]
+  end
+
+  subgraph Vercel["Vercel — blueprint-ai"]
+    Static["Static files\nindex, explorer, api"]
+    AgentFn["/api/agent\napi/agent.js"]
+  end
+
+  subgraph External["External services"]
+    Featherless["Featherless API\nLLM + tool calls"]
+    Supabase["Supabase Postgres\nschema + RLS"]
+    jsDelivr["jsDelivr CDN\nGitHub main branch"]
+  end
+
+  subgraph LocalDev["Local dev optional"]
+    PyServer["python http.server :4173"]
+    AgentDev["serve-agent.mjs :8000"]
+  end
+
+  subgraph FlutterApp["Flutter reference client"]
+    Flutter["integrations/blueprint-flutter"]
+  end
+
+  Launch --> Explorer
+  Explorer --> Bridge
+  Bridge -->|POST production| AgentFn
+  Bridge -->|POST localhost| AgentDev
+  AgentFn --> Featherless
+  AgentFn --> Supabase
+  AgentDev --> Featherless
+  AgentDev --> Supabase
+  Explorer -->|resolveAsset on *.vercel.app| jsDelivr
+  Explorer -->|local paths| Static
+  Flutter --> Supabase
+  PyServer -.->|npm run dev| Launch
+```
+
+### User journey (pages)
+
+```mermaid
+flowchart LR
+  A["/ Launch site\nThree.js hero car"] -->|Launch BluePrint| B["Garage.dc.html\n4 cars + wind tunnel"]
+  B -->|car=0| C["Car Anatomy Explorer\nGT3 RS 114 parts"]
+  B -->|car=1-3| D["Car Anatomy Explorer\nmonolithic GLB"]
+  B --> E["Wind Tunnel.html\naero viz"]
+  C -->|Engine chip| F["engine_teardown/engine.html\nflat-6 layers"]
+  C -->|Gold orb| G["AI assistant\npaint / explode / specs"]
+```
+
+### AI assistant request flow
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant UI as Car Anatomy Explorer
+  participant B as agent-bridge.js
+  participant A as api/agent.js
+  participant F as Featherless
+  participant S as Supabase
+  participant T as Three.js scene
+
+  U->>UI: "paint it guards red"
+  UI->>B: BlueprintAgent.ask()
+  B->>A: POST /api/agent
+  A->>F: chat.completions + tools
+  F-->>A: set_paint, speech
+  A->>S: get_part_facts optional
+  S-->>A: verified specs
+  A-->>B: speech + actions[]
+  B-->>UI: JSON response
+  UI->>T: runChatActions set_paint
+  T-->>U: body meshes recolored
+  Note over B,A: Offline keyword fallback if API down
+```
+
+### GT3 RS multipart load
+
+```mermaid
+flowchart TD
+  M["partsManifest\n114 part names in Car Anatomy Explorer.dc.html"] --> R["resolveAsset\nasset-config.js"]
+  R -->|localhost| L["./explorer/assets/gt3rs/parts/*.glb\ndisk"]
+  R -->|*.vercel.app| J["cdn.jsdelivr.net/gh/ShadowEsu/Blueprint@main/explorer/assets/gt3rs/parts/"]
+  L --> GL["GLTFLoader × 114"]
+  J --> GL
+  GL --> C["THREE.Group combined"]
+  C --> P["processCar\ncategorize → wing hood doors wheels engine…"]
+  P --> V["Orbit + explode + AI paint targets"]
+```
+
+### Asset deployment split
+
+```mermaid
+flowchart LR
+  GH["GitHub main\nShadowEsu/Blueprint"] --> V["Vercel deploy\n.vercelignore strips large GLBs"]
+  GH --> JD["jsDelivr\nserves excluded GLBs"]
+  V --> Small["Shipped on Vercel\nHTML JS CSS logo\nshowroom-car.glb ~33MB"]
+  JD --> Large["CDN only\nexplorer/assets/*.glb\ngt3rs/parts/*.glb ×114"]
+  Small --> User["Browser"]
+  Large --> User
+```
+
+### Supabase data layer
+
+```mermaid
+erDiagram
+  cars ||--o{ car_variants : has
+  car_variants ||--o| car_specs : has
+  car_variants ||--o{ performance_tests : has
+  car_variants ||--o{ pricing_market : has
+  cars ||--o{ research_chunks : references
+
+  cars {
+    text id PK
+    text make
+    text model
+    text summary
+  }
+  car_variants {
+    text id PK
+    text car_id FK
+    text drivetrain
+    text transmission
+  }
+  car_specs {
+    text variant_id FK
+    text engine
+    int horsepower_hp
+  }
+  research_chunks {
+    text chunk_title
+    text chunk_text
+  }
+```
+
+Agent reads these tables in `api/agent.js` (service role server-side). Flutter reads with anon key + RLS public read.
+
+### Tech stack map
+
+```mermaid
+mindmap
+  root((BluePrint AI))
+    Frontend
+      index.html launch
+      src/main.js Three.js
+      explorer DC runtime
+      support.js React
+      Three.js GLTFLoader
+    Hosting
+      Vercel static
+      Vercel serverless api
+      jsDelivr GLB CDN
+    AI
+      Featherless Qwen2.5-7B
+      api/agent.js tools
+      agent-bridge.js client
+    Data
+      Supabase Postgres
+      seed fallback in agent
+    Mobile
+      Flutter reference app
+      supabase_flutter
+```
+
+---
+
 ## Quick start (local)
 
 ```bash
