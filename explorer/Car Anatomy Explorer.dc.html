@@ -222,6 +222,26 @@ const CHIRON_PARTS = [
   'InteriorC', 'InteriorTillingColour', 'SeatBelt',
 ];
 
+const GT3RS_PARTS = [
+  "brakedisc_FR.004","Object_4.004","wheel.003","brakedisc_FR.002","Object_4.002","wheel.002",
+  "brakedisc_FR.001","Object_4.001","wheel.001","brakedisc_FR.003","Object_4.003","body.005",
+  "windshield","shifter_knob_M","shifter_boot_M","shifter_base_M","shifter_A","seats_R","seat_FR",
+  "seat_FL","quarterglass_R_tint","quarterglass_L","mirror_R","mirror_L","headlightglass_R_led",
+  "headlightglass_L_led","headlight_R_led","headlight_L_led","gauges_screen","fascia_mid","fascia_glass",
+  "doorpanel_R_antichrome","doorpanel_L_antichrome","doorglass_R_tint","doorglass_L_tint",
+  "door_R_chrome_end","door_R_antichrome_end","door_L_chrome_end","door_L_antichrome_end",
+  "dash_noclock","dash_clock","dash_9000","chrome_dash_accessories","body_chrome_end","body.002",
+  "black_dash_accessories","backlight_tint","steer_3","signalstalk","brakepedal","gaspedal","clutchpedal",
+  "needle_tacho_9000","radiators_small","exhausttip_3_chrome","engine","exhaust","exhaust_TT","muffler",
+  "brakelines","bumperbar_F","bumperbar_R","coilover_F","coilover_RL","coilover_RR","coolantlines",
+  "diff_F","driveshaft","fuellines","fueltank","halfshaft_e_F","halfshaft_e_R","halfshaft_F","halfshaft_R",
+  "heatshield","hub_F","hub_R","intake_TT","lowerarm_F","lowerarm_R","muffler_custom","pushrod_R",
+  "pushrod_triangle_R","radiator","steeringbox","subframe_F","subframe_R","swaybar_F","swaybar_R",
+  "tierod_F","trailingarm_R","transaxle","upperarm_F","upperarm_R","needle_tacho","exhausttip_3_antichrome",
+  "underbody_gt3rs","wheel","fender_R","right_leg","body_gt3rs","door_R","door_L","fender_L","spoiler",
+  "bumper_F","bumper_R","left_leg","tailgate","sideskirts_R","sideskirts_L","carbon_hood","carbon_roof","carbon_Wing"
+];
+
 const TOURBILLON_INFO = {
   wing:     { name: 'Active rear wing',      desc: 'Multi-position wing \u2014 retracts flush at speed for low drag, deploys as an airbrake under heavy braking, and angles for downforce mid-corner.' },
   hood:     { name: 'Front hood',            desc: 'Long carbon clamshell covering the front radiators and a shallow luggage area. The Tourbillon\u2019s nose pulls heavy cooling air through, then exhausts it over the hood.' },
@@ -241,24 +261,25 @@ const TOURBILLON_INFO = {
 const CARS = [
   {
     id: 'porsche-gt3-rs',
-    glb: resolveAsset('./assets/porsche_gt3_rs.glb'),
-    sizeMB: '18 MB · 291 meshes',
+    partsManifest: GT3RS_PARTS,
+    partsBase: resolveAsset('./assets/gt3rs/parts/'),
+    sizeMB: '114 parts · high-detail assembly',
     maker: 'Porsche',
     series: '992.2',
     name: '911 GT3 RS',
     tag: 'Track · 525 hp · 1450 kg',
     info: PORSCHE_INFO,
-    attribution: '3D model: Black Snow \u00B7 Sketchfab \u00B7 CC BY 4.0',
+    attribution: 'High-detail segmented assembly · Blueprint explorer',
     paint: 'silver',
     categorize: (name) => {
       const n = name.toLowerCase();
-      if (n.includes('carbon_wing') || n.includes('gt3rs_spoiler')) return 'wing';
-      if (n.includes('carbon_hood')) return 'hood';
-      if (n.includes('door_l') || n.includes('door_r') || n.includes('doorpanel') || n.includes('doorglass') || n.includes('mirror_')) return 'doors';
-      if (n.includes('wheels_20x9') || n.includes('brakedisc') || /^object_4\./.test(n)) return 'wheels';
-      if (n === 'twixer_992_engine' || n.includes('intake_tt') || n.includes('transaxle') || n.includes('driveshaft') || n.includes('diff_f') || n.includes('radiator')) return 'engine';
+      if (n.includes('carbon_wing') || n.includes('spoiler') || n.includes('gt3rs_spoiler')) return 'wing';
+      if (n.includes('carbon_hood') || n.includes('carbon_roof')) return 'hood';
+      if (n.includes('door_') || n.includes('doorpanel') || n.includes('doorglass') || n.includes('mirror_')) return 'doors';
+      if (n.includes('brakedisc') || /^object_4\./.test(n) || /^wheel/.test(n) || n.includes('hub_') || n.includes('coilover') || n.includes('tierod') || n.includes('lowerarm') || n.includes('upperarm') || n.includes('pushrod') || n.includes('trailingarm') || n.includes('swaybar')) return 'wheels';
+      if (n === 'engine' || n.includes('intake_tt') || n.includes('transaxle') || n.includes('driveshaft') || n.includes('diff_f') || n.includes('radiator') || n.includes('halfshaft')) return 'engine';
       if (n.includes('exhaust') || n.includes('muffler') || n.includes('heatshield')) return 'exhaust';
-      if (n.includes('seat_') || n.includes('seats_') || n.includes('dash_') || n.includes('steer_') || n.includes('pedal') || n.includes('shifter') || n.includes('gauges_screen') || n.includes('needle_tacho') || n.includes('signalstalk') || n.includes('fascia') || n.includes('black_dash') || n.includes('chrome_dash')) return 'interior';
+      if (n.includes('seat_') || n.includes('seats_') || n.includes('dash_') || n.includes('steer_') || n.includes('pedal') || n.includes('shifter') || n.includes('gauges') || n.includes('needle_tacho') || n.includes('signalstalk') || n.includes('fascia') || n.includes('black_dash') || n.includes('chrome_dash')) return 'interior';
       return 'body';
     },
   },
@@ -928,7 +949,7 @@ Reply now with ONLY the JSON object.`;
         /* Only the Porsche GT3 RS (idx 0) drills down to the engine teardown.
            Every other car treats the engine chip as a normal part selector. */
         if (this.state.carIdx === 0) {
-          window.location.href = './Bugatti%20W16%20Engine%20Teardown.html';
+          window.location.href = './uploads/engine_teardown/engine.html?car=gt3rs';
         } else {
           this.selectPart('engine');
         }

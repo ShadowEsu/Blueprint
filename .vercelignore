@@ -1,6 +1,6 @@
 # Large GLBs served via jsDelivr from GitHub (see explorer/asset-config.js)
 explorer/assets/*.glb
-explorer/assets/gt3rs/*.glb
+explorer/assets/gt3rs/parts/*.glb
 explorer/assets/chiron/*.glb
 explorer/uploads/*.glb
 explorer/uploads/engine_solid_*.glb
