@@ -1,3 +1,8 @@
+# Final Product GLBs — CDN on Vercel (see src/config.js)
+assets/models/*.glb
+assets/engines/*.glb
+assets/engines/parts/*.glb
+assets/blueprint-showroom-car.glb
 # Large GLBs served via jsDelivr from GitHub (see explorer/asset-config.js)
 explorer/assets/*.glb
 explorer/assets/gt3rs/parts/*.glb

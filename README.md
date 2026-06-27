@@ -12,8 +12,10 @@ AI-powered 3D car explorer. Launch page, interactive garage, Featherless assista
 | Piece | Path | Purpose |
 |-------|------|---------|
 | Launch site | `/` (`index.html`, `src/`) | Marketing scroll page + 3D hero car |
-| Main app | `/explorer/` | Garage, car anatomy, wind tunnel, engine teardown |
+| **Final Product** | `/app.html` (`src/app.js`) | **Main app** — 8 machines, explode, paint, AI assistant |
+| Explorer | `/explorer/` | Alternate garage / anatomy / wind tunnel |
 | AI agent | `/api/agent` (`api/agent.js`) | Featherless LLM + Supabase data tools |
+| Health check | `/api/health` | Supabase + provider status |
 | Supabase | `supabase/` | Postgres schema, migrations, seed data |
 | Flutter | `integrations/blueprint-flutter/` | Mobile reference client (Supabase + AI chat) |
 | Local agent | `scripts/serve-agent.mjs` | Dev server for AI on port 8000 |
@@ -227,7 +229,9 @@ Do **not** double-click `index.html`. ES modules need a server (`npm run dev` or
 | Page | URL |
 |------|-----|
 | Launch site | `/` |
-| Garage | `/explorer/Garage.dc.html` |
+| **Final Product (main)** | `/app.html` |
+| Health / Supabase check | `/api/health` |
+| Garage (explorer) | `/explorer/Garage.dc.html` |
 | Car anatomy (3D) | `/explorer/Car%20Anatomy%20Explorer.dc.html` |
 | GT3 by index | `/explorer/Car%20Anatomy%20Explorer.dc.html?car=0` |
 | Wind tunnel | `/explorer/Wind%20Tunnel.html` |

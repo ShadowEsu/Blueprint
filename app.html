@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#061d3a" />
+    <meta name="agent-endpoint" content="/api/agent" />
+    <title>BluePrint AI — Vehicle Lab</title>
+    <link rel="icon" href="./assets/blueprint-ai-logo.jpeg" type="image/jpeg" />
+    <link rel="stylesheet" href="./src/app.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./vendor/three.module.js"
+        }
+      }
+    </script>
+  </head>
+  <body data-view="library">
+    <div class="blueprint-field" aria-hidden="true"></div>
+
+    <header class="app-header">
+      <a class="app-brand" href="./index.html" aria-label="Back to the BluePrint AI website">
+        <img src="./assets/blueprint-ai-logo.jpeg" alt="" />
+        <span>BluePrint AI</span>
+      </a>
+      <div class="header-rule" aria-hidden="true"></div>
+      <p>Interactive vehicle intelligence</p>
+      <a class="website-link" href="./index.html">Website <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <main>
+      <section class="library-view" aria-labelledby="library-title">
+        <aside class="library-sidebar">
+          <p class="sidebar-label">Workspace</p>
+          <button class="side-link is-active" data-filter="all" type="button">
+            <span class="side-icon">⌁</span> All machines <b>08</b>
+          </button>
+          <button class="side-link" data-filter="vehicle" type="button">
+            <span class="side-icon">▱</span> Vehicles <b>06</b>
+          </button>
+          <button class="side-link" data-filter="engine" type="button">
+            <span class="side-icon">⌘</span> Powertrains <b>02</b>
+          </button>
+          <div class="sidebar-note">
+            <span class="status-dot"></span>
+            <div>
+              <strong>Verified schema ready</strong>
+              <small>Supabase + 3D scene tools</small>
+            </div>
+          </div>
+        </aside>
+
+        <div class="library-content">
+          <div class="library-intro">
+            <div>
+              <p class="eyebrow">Machine library / 2026.06</p>
+              <h1 id="library-title">Choose a machine.<br /><em>Learn every layer.</em></h1>
+            </div>
+            <p class="intro-copy">
+              Open a complete vehicle or step straight into a powertrain. Pull the assembly apart,
+              inspect its systems, and ask Blueprint to guide the scene while it explains what you see.
+            </p>
+          </div>
+
+          <div class="library-toolbar">
+            <p><span id="result-count">08</span> digital twins</p>
+            <div class="toolbar-legend"><i></i> Interactive assembly <i></i> AI scene control</div>
+          </div>
+
+          <div class="machine-grid" id="machine-grid" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section class="explorer-view" aria-label="Interactive vehicle explorer">
+        <div class="scene-shell">
+          <canvas id="scene-canvas"></canvas>
+          <div class="scene-vignette" aria-hidden="true"></div>
+          <div class="measurement measurement-x" aria-hidden="true"><span>LONGITUDINAL DATUM / X</span></div>
+          <div class="measurement measurement-y" aria-hidden="true"><span>VERTICAL DATUM / Y</span></div>
+
+          <div class="loading-panel" id="loading-panel" role="status">
+            <div class="loading-kicker">Loading digital twin</div>
+            <strong id="loading-title">Vehicle</strong>
+            <div class="loading-track"><i id="loading-progress"></i></div>
+            <span id="loading-percent">0%</span>
+          </div>
+
+          <button class="back-library" id="back-library" type="button">
+            <span aria-hidden="true">←</span> Machine library
+          </button>
+
+          <div class="asset-identity">
+            <p id="asset-maker">Manufacturer / Series</p>
+            <h1 id="asset-name">Vehicle</h1>
+            <div id="asset-tag">Specification</div>
+          </div>
+
+          <div class="scene-tools" aria-label="Scene tools">
+            <button id="blueprint-toggle" type="button" aria-pressed="false" title="Toggle blueprint wireframe">
+              <span>◇</span> X-ray
+            </button>
+            <button id="wind-toggle" type="button" aria-pressed="false" title="Toggle airflow visualization">
+              <span>≋</span> Airflow
+            </button>
+            <button id="spin-toggle" type="button" aria-pressed="false" title="Toggle automatic rotation">
+              <span>↻</span> Auto orbit
+            </button>
+          </div>
+
+          <nav class="part-rail" id="part-rail" aria-label="Vehicle systems"></nav>
+
+          <article class="part-card" id="part-card">
+            <div class="part-card-topline">
+              <span id="part-index">SYSTEM 00</span>
+              <button id="part-close" type="button" aria-label="Close part information">×</button>
+            </div>
+            <h2 id="part-name">Select a system</h2>
+            <p id="part-description">Choose a system or click the model to inspect it.</p>
+            <dl id="part-specs"></dl>
+            <div class="part-actions">
+              <button id="focus-part" type="button">Focus</button>
+              <button id="isolate-part" type="button">Isolate</button>
+              <button id="ask-part" type="button">Ask Blueprint</button>
+            </div>
+          </article>
+
+          <div class="airflow-card" id="airflow-card">
+            <span>AERODYNAMIC SIMULATION</span>
+            <strong>Live airflow study</strong>
+            <div><b>Velocity</b><em>180 km/h</em></div>
+            <div><b>Flow field</b><em>Illustrative</em></div>
+            <small>Streamlines visualize direction only; values are not model-derived CFD.</small>
+          </div>
+
+          <div class="exploder">
+            <div class="exploder-labels"><span>Assembled</span><b id="explode-value">0%</b><span>Exploded</span></div>
+            <input id="explode-slider" type="range" min="0" max="100" value="0" aria-label="Exploded view amount" />
+            <div class="exploder-actions">
+              <button id="reset-view" type="button">Reset view</button>
+              <button id="isolate-selected" type="button">Isolate selected</button>
+            </div>
+          </div>
+
+          <p class="scene-hint">Drag to orbit · scroll to zoom · click a part to inspect</p>
+          <p class="attribution" id="attribution"></p>
+        </div>
+
+        <aside class="assistant-panel" id="assistant-panel">
+          <header>
+            <div class="assistant-orb" aria-hidden="true"><i></i></div>
+            <div>
+              <strong>Blueprint</strong>
+              <span id="agent-status"><i></i> Scene agent ready</span>
+            </div>
+            <button id="assistant-collapse" type="button" aria-label="Collapse assistant">—</button>
+          </header>
+          <div class="conversation" id="conversation" aria-live="polite"></div>
+          <div class="suggestions" id="suggestions">
+            <button type="button">Show me the engine</button>
+            <button type="button">Take the car apart</button>
+            <button type="button">How does the aero work?</button>
+          </div>
+          <form id="assistant-form">
+            <label for="assistant-input">Ask about this machine</label>
+            <div>
+              <input id="assistant-input" type="text" autocomplete="off" placeholder="Ask, show, isolate, or change…" />
+              <button type="submit" aria-label="Send question">↑</button>
+            </div>
+          </form>
+        </aside>
+        <button class="assistant-reopen" id="assistant-reopen" type="button"><span>✦</span> Ask Blueprint</button>
+      </section>
+    </main>
+
+    <script type="module" src="./src/app.js?v=8"></script>
+  </body>
+</html>

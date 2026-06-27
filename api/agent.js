@@ -172,50 +172,64 @@ async function runDataTool(db, name, args, defaultCar) {
 
   if (name === "find_car") {
     const car = await resolveCar(db, args.query);
-    return car ? { found: true, name: `${car.make} ${car.model}`, summary: car.summary, status: car.current_status } : { found: false };
+    return {
+      out: car ? { found: true, name: `${car.make} ${car.model}`, summary: car.summary, status: car.current_status } : { found: false },
+      fromDb: Boolean(db && car),
+    };
   }
 
   if (name === "search_knowledge") {
     if (db) {
       const { data } = await db.from("research_chunks").select("chunk_title, chunk_text, chunk_type")
         .or(`chunk_text.ilike.%${args.query}%,chunk_title.ilike.%${args.query}%`).limit(6);
-      if (data?.length) return { chunks: data };
+      if (data?.length) return { out: { chunks: data }, fromDb: true };
     }
     const q = String(args.query).toLowerCase();
     const hits = SEED.chunks.filter((c) => c.chunk_text.toLowerCase().includes(q) || c.chunk_title.toLowerCase().includes(q));
-    return { chunks: hits.length ? hits : SEED.chunks };
+    return { out: { chunks: hits.length ? hits : SEED.chunks }, fromDb: false };
   }
 
   const car = await resolveCar(db, carQuery);
-  if (!car) return { found: false };
+  if (!car) return { out: { found: false }, fromDb: false };
   const variant = await getVariant(db, car.id);
   const specs = variant ? await getSpecs(db, variant.id) : null;
   const carName = `${car.make} ${car.model}${car.model_year ? ` (${car.model_year})` : ""}`;
+  const fromDb = Boolean(db);
 
   if (name === "get_part_facts") {
     const facts = partFacts(String(args.part), specs, variant);
-    return { found: Object.keys(facts).length > 0, car: carName, part: args.part, facts, caveats: car.caveats };
+    return { out: { found: Object.keys(facts).length > 0, car: carName, part: args.part, facts, caveats: car.caveats }, fromDb };
   }
   if (name === "get_overview") {
-    return { found: true, name: carName, generation: car.generation, status: car.current_status, summary: car.summary, caveats: car.caveats };
+    return { out: { found: true, name: carName, generation: car.generation, status: car.current_status, summary: car.summary, caveats: car.caveats }, fromDb };
   }
   if (name === "get_performance" && variant) {
     if (db) {
       const { data } = await db.from("performance_tests").select("*").eq("variant_id", variant.id);
-      if (data?.length) return { found: true, car: carName, tests: data };
+      if (data?.length) return { out: { found: true, car: carName, tests: data }, fromDb: true };
     }
     const tests = SEED.perf.filter((p) => p.variant_id === variant.id);
-    return { found: tests.length > 0, car: carName, tests };
+    return { out: { found: tests.length > 0, car: carName, tests }, fromDb: false };
   }
   if (name === "get_pricing" && variant) {
     if (db) {
       const { data } = await db.from("pricing_market").select("*").eq("variant_id", variant.id);
-      if (data?.length) return { found: true, car: carName, pricing: data };
+      if (data?.length) return { out: { found: true, car: carName, pricing: data }, fromDb: true };
     }
     const pricing = SEED.pricing.filter((p) => p.variant_id === variant.id);
-    return { found: pricing.length > 0, car: carName, pricing };
+    return { out: { found: pricing.length > 0, car: carName, pricing }, fromDb: false };
   }
-  return { error: `unknown data tool ${name}` };
+  return { out: { error: `unknown data tool ${name}` }, fromDb: false };
+}
+
+function agentMeta(db, usedSupabase) {
+  const provider = process.env.LLM_PROVIDER
+    || (process.env.FEATHERLESS_API_KEY ? "featherless" : process.env.OPENAI_API_KEY ? "openai" : "local");
+  return {
+    provider,
+    source: usedSupabase ? "supabase" : db ? "supabase-seed-fallback" : "seed",
+    verified: usedSupabase,
+  };
 }
 
 async function runAgent(body) {
@@ -232,6 +246,7 @@ async function runAgent(body) {
 
   const actions = [];
   const data = {};
+  let usedSupabase = false;
 
   for (let step = 0; step < 2; step++) {
     const completion = await llm.chat.completions.create({
@@ -244,7 +259,7 @@ async function runAgent(body) {
 
     const choice = completion.choices[0]?.message;
     if (!choice?.tool_calls?.length) {
-      return { speech: choice?.content || "Done.", actions, data };
+      return { speech: choice?.content || "Done.", actions, data: { ...data, ...agentMeta(db, usedSupabase) } };
     }
 
     messages.push(choice);
@@ -258,7 +273,8 @@ async function runAgent(body) {
         actions.push({ tool: name, args });
         messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify({ status: "queued", tool: name }) });
       } else {
-        const out = await runDataTool(db, name, args, car);
+        const { out, fromDb } = await runDataTool(db, name, args, car);
+        if (fromDb) usedSupabase = true;
         data[name] = out;
         messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(out) });
       }
@@ -267,9 +283,9 @@ async function runAgent(body) {
 
   const last = messages[messages.length - 1];
   if (last?.role === "assistant" && last.content) {
-    return { speech: last.content, actions, data };
+    return { speech: last.content, actions, data: { ...data, ...agentMeta(db, usedSupabase) } };
   }
-  return { speech: "Done.", actions, data };
+  return { speech: "Done.", actions, data: { ...data, ...agentMeta(db, usedSupabase) } };
 }
 
 export default async function handler(req, res) {
