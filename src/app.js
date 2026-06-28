@@ -4,6 +4,8 @@ import { assetUrl } from "./config.js";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+const isMobile = () => matchMedia("(max-width: 820px)").matches;
+const isCoarsePointer = () => matchMedia("(pointer: coarse)").matches;
 
 const commonCarInfo = {
   wing: { name: "Aerodynamic surfaces", desc: "The wing, spoiler, splitter, and diffuser manage pressure around the body to trade drag for stability and cornering grip.", specs: { role: "Downforce", system: "Body aero" } },
@@ -224,8 +226,19 @@ async function openAsset(id, push = true) {
   elements.name.textContent = asset.name;
   elements.tag.textContent = asset.tag;
   elements.attribution.textContent = asset.attribution;
-  elements.assistant.classList.remove("is-collapsed");
-  $("#assistant-reopen").classList.remove("is-visible");
+  const hint = $(".scene-hint");
+  if (hint) {
+    hint.textContent = isMobile()
+      ? "Drag to orbit · pinch to zoom · tap a part"
+      : "Drag to orbit · scroll to zoom · click a part to inspect";
+  }
+  if (isMobile()) {
+    elements.assistant.classList.add("is-collapsed");
+    $("#assistant-reopen").classList.add("is-visible");
+  } else {
+    elements.assistant.classList.remove("is-collapsed");
+    $("#assistant-reopen").classList.remove("is-visible");
+  }
   elements.conversation.replaceChildren();
   state.history = [];
   addMessage("assistant", `I've opened the ${asset.name}. Pull the assembly apart yourself, click a system, or ask me to move the scene for you.`);
@@ -308,7 +321,7 @@ function genericPartInfo(category) {
 
 function initScene() {
   renderer = new THREE.WebGLRenderer({ canvas: elements.canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.6));
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, isCoarsePointer() ? 1.35 : 1.6));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.12;
@@ -347,6 +360,8 @@ function initScene() {
     camera.updateProjectionMatrix();
   };
   window.addEventListener("resize", resize, { passive: true });
+  window.visualViewport?.addEventListener("resize", resize, { passive: true });
+  window.addEventListener("orientationchange", () => setTimeout(resize, 120), { passive: true });
   resize();
 
   let down = null;
@@ -379,19 +394,71 @@ class OrbitRig {
     this.minDistance = 1;
     this.maxDistance = 80;
     this.autoRotate = false;
+    const orbitSpeed = isCoarsePointer() ? 0.011 : 0.008;
+    const pointers = new Map();
     let dragging = false;
     let lastX = 0;
     let lastY = 0;
-    dom.addEventListener("pointerdown", (event) => { dragging = true; lastX = event.clientX; lastY = event.clientY; dom.setPointerCapture?.(event.pointerId); });
-    dom.addEventListener("pointermove", (event) => {
-      if (!dragging) return;
-      this.azimuth -= (event.clientX - lastX) * 0.008;
-      this.polar = THREE.MathUtils.clamp(this.polar - (event.clientY - lastY) * 0.008, 0.2, Math.PI - 0.2);
+    let pinchStartDistance = 0;
+    let pinchStartDesiredDistance = 0;
+
+    const pointerDistance = () => {
+      const pts = [...pointers.values()];
+      return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    };
+
+    const onPointerDown = (event) => {
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      dom.setPointerCapture?.(event.pointerId);
+      if (pointers.size === 1) {
+        dragging = true;
+        lastX = event.clientX;
+        lastY = event.clientY;
+      } else if (pointers.size === 2) {
+        dragging = false;
+        pinchStartDistance = pointerDistance();
+        pinchStartDesiredDistance = this.desiredDistance;
+      }
+    };
+
+    const onPointerMove = (event) => {
+      if (!pointers.has(event.pointerId)) return;
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (pointers.size === 2 && pinchStartDistance > 0) {
+        const scale = pinchStartDistance / pointerDistance();
+        this.desiredDistance = THREE.MathUtils.clamp(
+          pinchStartDesiredDistance * scale,
+          this.minDistance,
+          this.maxDistance,
+        );
+        return;
+      }
+      if (!dragging || pointers.size !== 1) return;
+      this.azimuth -= (event.clientX - lastX) * orbitSpeed;
+      this.polar = THREE.MathUtils.clamp(this.polar - (event.clientY - lastY) * orbitSpeed, 0.2, Math.PI - 0.2);
       lastX = event.clientX;
       lastY = event.clientY;
-    });
-    dom.addEventListener("pointerup", () => { dragging = false; });
-    dom.addEventListener("pointercancel", () => { dragging = false; });
+    };
+
+    const onPointerEnd = (event) => {
+      pointers.delete(event.pointerId);
+      if (pointers.size < 2) pinchStartDistance = 0;
+      if (pointers.size === 0) {
+        dragging = false;
+        return;
+      }
+      if (pointers.size === 1) {
+        const point = [...pointers.values()][0];
+        dragging = true;
+        lastX = point.x;
+        lastY = point.y;
+      }
+    };
+
+    dom.addEventListener("pointerdown", onPointerDown);
+    dom.addEventListener("pointermove", onPointerMove);
+    dom.addEventListener("pointerup", onPointerEnd);
+    dom.addEventListener("pointercancel", onPointerEnd);
     dom.addEventListener("wheel", (event) => {
       event.preventDefault();
       this.desiredDistance = THREE.MathUtils.clamp(this.desiredDistance * (1 + Math.sign(event.deltaY) * 0.1), this.minDistance, this.maxDistance);

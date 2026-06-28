@@ -647,10 +647,11 @@ body[data-scene="2"] .dot.is-active {
 
 @media (max-width: 820px) {
   .site-header {
-    top: 12px;
-    width: calc(100% - 24px);
+    top: max(12px, env(safe-area-inset-top));
+    width: calc(100% - max(24px, env(safe-area-inset-left) + env(safe-area-inset-right)));
     min-height: 54px;
-    padding-left: 12px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
   }
 
   .brand {
@@ -666,23 +667,32 @@ body[data-scene="2"] .dot.is-active {
   }
 
   .top-nav .launch-link {
-    min-height: 38px;
+    min-height: 44px;
     padding-inline: 13px;
     font-size: 13px;
+  }
+
+  .primary-action {
+    min-height: 48px;
   }
 
   .page-dots {
     top: auto;
     right: 50%;
-    bottom: 18px;
+    bottom: max(18px, env(safe-area-inset-bottom));
     grid-auto-flow: column;
     transform: translateX(50%);
   }
 
   .page-section {
     min-height: 100svh;
+    min-height: 100dvh;
     align-items: flex-start;
-    padding: 96px 22px 92px;
+    padding:
+      calc(96px + env(safe-area-inset-top))
+      max(22px, env(safe-area-inset-right))
+      calc(92px + env(safe-area-inset-bottom))
+      max(22px, env(safe-area-inset-left));
   }
 
   .section-content,
